@@ -40,12 +40,14 @@ class Graph():
 
     def get_edge(self, layout):
         if layout == 'openpose':
-            self.num_node = 18
+            self.num_node = 17
             self_link = [(i, i) for i in range(self.num_node)]
-            neighbor_link = [(4, 3), (3, 2), (7, 6), (6, 5), (13, 12), (12,
-                                                                        11),
-                             (10, 9), (9, 8), (11, 5), (8, 2), (5, 1), (2, 1),
-                             (0, 1), (15, 0), (14, 0), (17, 15), (16, 14)]
+            neighbor_link = [
+                                (0, 1), (0, 2), (1, 3), (2, 4),  # Head
+                                (5, 6), (5, 7), (7, 9), (6, 8), (8, 10),
+                                (11, 5), (12, 6), (0,5), (0,6),
+                                (11, 13), (12, 14), (13, 15), (14, 16)
+                            ]
             self.edge = self_link + neighbor_link
             self.center = 1
         elif layout == 'ntu-rgb+d':
