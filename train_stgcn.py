@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import data
 import numpy as np
 from net.st_gcn_perceptual import Model
 
@@ -33,6 +32,8 @@ for k,d in data.items():
 th = int(len(train_x) * 0.8) + 1
 train_x = np.array(train_x[:th])
 val_x = np.array(train_x[th:])
+
+save_path = "log/stgcn.pt"
 
 loss = nn.MSELoss()
 lr = 1e-3
