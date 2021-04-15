@@ -40,7 +40,7 @@ class hr_pose_generator(nn.Module):
         self.layer2 = res_linear_layer(linear_hidden = linear_hidden)
         self.layer3 = res_linear_layer(linear_hidden = linear_hidden)
         self.dropout =  nn.Dropout(p=0.5)
-        self.final_linear = nn.Linear(linear_hidden,36)
+        self.final_linear = nn.Linear(linear_hidden,34)
         
     def forward(self,input):
         noise = torch.FloatTensor(self.batch, 50, 10).normal_(0, 0.33).cuda()
@@ -59,7 +59,7 @@ class hr_pose_generator(nn.Module):
         output = self.layer3(output) + output
         output = self.dropout(output)
         output = self.final_linear(output)#,36
-        output = output.view(self.batch,50,36)
+        output = output.view(self.batch,50,34)
         output = self.rnn_noise_squashing(output)
         return output
     

@@ -93,8 +93,8 @@ class HCN(nn.Module):
         # in bsz,50,36
         bsz,sequence,Feature = x.size()
         x = x.contiguous().view(bsz,1,sequence,Feature)
-        fold_x = torch.nn.functional.unfold( x,(5,36), stride=3)
-        permute_x = fold_x.permute(0,2,1).contiguous().view(bsz,16,5,36) 
+        fold_x = torch.nn.functional.unfold( x,(5,34), stride=3)
+        permute_x = fold_x.permute(0,2,1).contiguous().view(bsz,16,5,34) 
         x = permute_x.contiguous().view(bsz*16,5,17,2).permute(0,3,1,2).unsqueeze(4)
         N, C, T, V, M = x.size()  # N0, C1, T2, V3, M4
         motion = x[:,:,1::,:,:]-x[:,:,0:-1,:,:]

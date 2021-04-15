@@ -135,8 +135,8 @@ def train(generator,frame_discriminator,seq_discriminator,opt):
         total_loss4 = 0.0
         for i, (x,target) in enumerate(dataloader):
             audio = Variable(x.type(Tensor).transpose(1,0))#50,1,1600
-            pose = Variable(target.type(Tensor))#1,50,18,2
-            pose=pose.view(batch_size,50,36)
+            pose = Variable(target.type(Tensor))#1,50,17,2
+            pose=pose.view(batch_size,50,34)
             # Adversarial ground truths
             frame_valid = Variable(Tensor(np.ones((batch_size,16))),requires_grad=False)                
             frame_fake_gt = Variable(Tensor(np.zeros((batch_size,16))),requires_grad=False)

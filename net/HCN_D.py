@@ -24,7 +24,7 @@ class seq_discriminator(nn.Module):
         #image input batch*50*36
         #audio input 50*1*1600
         #pose=image.view(1,50,18,2).permute()
-        pose=image.contiguous().view(self.batch,50,18,2,1).permute(0,3,1,2,4)#(batch,2,50,18,1) N, C, T, V, M
+        pose=image.contiguous().view(self.batch,50,17,2,1).permute(0,3,1,2,4)#(batch,2,50,18,1) N, C, T, V, M
         pose_out=self.pose_encoder(pose).contiguous().view(self.batch,1,256)#batch,1,256
         #print("pose_out",pose_out.shape)
         

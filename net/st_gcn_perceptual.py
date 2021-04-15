@@ -69,7 +69,7 @@ class Model(nn.Module):
     def forward(self, x):
         #in bsz,50,36
         bsz,time,feature = x.size()
-        x = x.contiguous().view(bsz,time,18,2).permute(0,3,1,2).unsqueeze(4)
+        x = x.contiguous().view(bsz,time,17,2).permute(0,3,1,2).unsqueeze(4)
         # data normalization
         N, C, T, V, M = x.size() # bsz,2,50,18,1
         x = x.permute(0, 4, 3, 1, 2).contiguous()
@@ -96,7 +96,7 @@ class Model(nn.Module):
     def extract_feature(self, x):
         #in bsz,50,36
         bsz,time,feature = x.size()
-        x = x.contiguous().view(bsz,time,18,2).permute(0,3,1,2).unsqueeze(4)
+        x = x.contiguous().view(bsz,time,17,2).permute(0,3,1,2).unsqueeze(4)
         # data normalization
         N, C, T, V, M = x.size()
         x = x.permute(0, 4, 3, 1, 2).contiguous()
