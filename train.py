@@ -22,7 +22,7 @@ from model.local_HCN_frame_D import HCN
 from model.pose_generator_norm import Generator#input 50,1,1600
 
 #load dataset
-from dataset.lisa_dataset import DanceDataset #audio input 50*1*1600
+from dataset.data_handler import DanceDataset #audio input 50*1*1600
 from torch.utils.data import DataLoader
 from torchvision import datasets
 

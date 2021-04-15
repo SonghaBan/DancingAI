@@ -28,7 +28,7 @@ class HCN(nn.Module):
     '''
     def __init__(self,
                  in_channel=2,
-                 num_joint=18,
+                 num_joint=17,
                  num_person=1,
                  out_channel=64,
                  window_size=32,
@@ -95,7 +95,7 @@ class HCN(nn.Module):
         x = x.contiguous().view(bsz,1,sequence,Feature)
         fold_x = torch.nn.functional.unfold( x,(5,36), stride=3)
         permute_x = fold_x.permute(0,2,1).contiguous().view(bsz,16,5,36) 
-        x = permute_x.contiguous().view(bsz*16,5,18,2).permute(0,3,1,2).unsqueeze(4)
+        x = permute_x.contiguous().view(bsz*16,5,17,2).permute(0,3,1,2).unsqueeze(4)
         N, C, T, V, M = x.size()  # N0, C1, T2, V3, M4
         motion = x[:,:,1::,:,:]-x[:,:,0:-1,:,:]
         motion = motion.permute(0,1,4,2,3).contiguous().view(N,C*M,T-1,V)
