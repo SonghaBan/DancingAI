@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from net.st_gcn_perceptual import Model
+import json
 
 epochs = 800
 graph_args={"layout": 'openpose',"strategy": 'spatial'}
@@ -37,13 +38,13 @@ save_path = "log/stgcn.pt"
 
 loss = nn.MSELoss()
 lr = 1e-3
-optimizer = torch.optim.RMSprop(model.parameters(), lr=lr)
+optimizer = torch.optim.RMSprop(stgcn.parameters(), lr=lr)
 scheduler = torch.optim.lr_scheduler.StepLR(optimiaer, step_size=5, gamma=0.7)
 
 min_val_loss = np.inf
 for epoch in range(1, epochs+1):
     l_sum, n = 0.0, 0
-    model.train()
+    stgcn.train()
     for x in train_x:
         y = stgcn(x)
         bsz,time,feature = y.size()
@@ -54,10 +55,10 @@ for epoch in range(1, epochs+1):
         l_sum += l.item() * x.shape[0]
         n += x.shape[0]
     scheduler.step()
-    val_loss = evaluate_model(model, loss, val_x)
+    val_loss = evaluate_model(stgcn, loss, val_x)
     if val_loss < min_val_loss:
         min_val_loss = val_loss
-        torch.save(model.state_dict(), save_path)
+        torch.save(stgcn.state_dict(), save_path)
     print("epoch", epoch, ", train loss:", l_sum / n, ", validation loss:", val_loss)
 
 
