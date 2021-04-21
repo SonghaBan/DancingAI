@@ -19,7 +19,7 @@ class HCN(nn.Module):
     '''
     def __init__(self,
                  in_channel=2,
-                 num_joint=17,
+                 num_joint=18,
                  num_person=1,
                  out_channel=64,
                  window_size=32,

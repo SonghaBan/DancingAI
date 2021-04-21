@@ -32,16 +32,13 @@ class Model(nn.Module):
 
         # load graph
         self.graph = Graph(**graph_args)
-        # print(self.graph.A)
-        # print('-------------')
         A = torch.tensor(self.graph.A, dtype=torch.float32, requires_grad=False)
         self.register_buffer('A', A)
 
         # build networks
-        print(A.size()) #3,17,17
         spatial_kernel_size = A.size(0)
         temporal_kernel_size = 9
-        kernel_size = (temporal_kernel_size, spatial_kernel_size) #9,3
+        kernel_size = (temporal_kernel_size, spatial_kernel_size)
         self.data_bn = nn.BatchNorm1d(in_channels * A.size(1))
         kwargs0 = {k: v for k, v in kwargs.items() if k != 'dropout'}
         self.st_gcn_networks = nn.ModuleList((
@@ -72,7 +69,7 @@ class Model(nn.Module):
     def forward(self, x):
         #in bsz,50,36
         bsz,time,feature = x.size()
-        x = x.contiguous().view(bsz,time,17,2).permute(0,3,1,2).unsqueeze(4)
+        x = x.contiguous().view(bsz,time,18,2).permute(0,3,1,2).unsqueeze(4)
         # data normalization
         N, C, T, V, M = x.size() # bsz,2,50,18,1
         x = x.permute(0, 4, 3, 1, 2).contiguous()
@@ -99,7 +96,7 @@ class Model(nn.Module):
     def extract_feature(self, x):
         #in bsz,50,36
         bsz,time,feature = x.size()
-        x = x.contiguous().view(bsz,time,17,2).permute(0,3,1,2).unsqueeze(4)
+        x = x.contiguous().view(bsz,time,18,2).permute(0,3,1,2).unsqueeze(4)
         # data normalization
         N, C, T, V, M = x.size()
         x = x.permute(0, 4, 3, 1, 2).contiguous()
