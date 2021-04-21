@@ -32,13 +32,16 @@ class Model(nn.Module):
 
         # load graph
         self.graph = Graph(**graph_args)
+        # print(self.graph.A)
+        # print('-------------')
         A = torch.tensor(self.graph.A, dtype=torch.float32, requires_grad=False)
         self.register_buffer('A', A)
 
         # build networks
+        print(A.size()) #3,17,17
         spatial_kernel_size = A.size(0)
         temporal_kernel_size = 9
-        kernel_size = (temporal_kernel_size, spatial_kernel_size)
+        kernel_size = (temporal_kernel_size, spatial_kernel_size) #9,3
         self.data_bn = nn.BatchNorm1d(in_channels * A.size(1))
         kwargs0 = {k: v for k, v in kwargs.items() if k != 'dropout'}
         self.st_gcn_networks = nn.ModuleList((

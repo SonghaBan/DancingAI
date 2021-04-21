@@ -244,7 +244,7 @@ if __name__ == '__main__':
         os.makedirs(opt.out)
     except OSError:
         pass
-    
+    print(opt)
     #init dataset
     data=DanceDataset(opt)
     dataloader = torch.utils.data.DataLoader(data,
