@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from model.pose_generator_norm import Generator
-from dataset.lisa_dataset_test import DanceDataset
+from dataset.data_handler import DanceDataset
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torch.autograd import Variable
@@ -36,7 +36,7 @@ parser.add_argument(
 
 parser.add_argument(
         "--data",
-        default="./dataset/clean_revised_pose_pairs.json",
+        default="./dataset/dance_music_paired.json",
         metavar="FILE",
         help="path to pth file",
         type=str
@@ -45,7 +45,7 @@ parser.add_argument(
 parser.add_argument("--count", type=int, default=100)#100
 parser.add_argument(
         "--output",
-        default="C:/Users/songhama/Documents/_School/Spring2021/Thesis/code/Music-Dance-Video-Synthesis/testoutput",
+        default="C:/Users/songhama/Documents/_School/Spring2021/Thesis/code/Dance-Synthesis/output",
         metavar="FILE",
         help="path to output",
         type=str
@@ -74,7 +74,7 @@ print(device)
 #generator.load_state_dict(torch.load(file_path, map_location=device))
 generator.load_state_dict(torch.load(file_path))
 generator.cuda()
-data=DanceDataset(args.data)
+data=DanceDataset(args)
 dataloader = torch.utils.data.DataLoader(data,
                                          batch_size=1,
                                          shuffle=False,

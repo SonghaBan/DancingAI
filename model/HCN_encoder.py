@@ -123,7 +123,7 @@ class HCN(nn.Module):
 
         t = out
         assert not ((t != t).any())# find out nan in tensor
-        assert not (t.abs().sum() == 0) # find out 0 tensor
+        #assert not (t.abs().sum() == 0) # find out 0 tensor
 
         return out
     

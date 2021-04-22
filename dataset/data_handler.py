@@ -26,16 +26,23 @@ class DanceDataset(torch.utils.data.Dataset):
         print(self.length)
         
         target=torch.FloatTensor(length,50,1600).zero_() #music
-        label=torch.FloatTensor(length,50,17,2).zero_() #dance
+        label=torch.FloatTensor(length,50,18,2).zero_() #dance
         index=0
         
         keys=sorted(pose_dict.keys())
         for key in keys:
-
+            #if int(key) != 2:
+            #    continue
             pose_sequences = np.array(pose_dict[key]['pose'])
             audio_sequences = np.array(pose_dict[key]['music'])
 
             for i, temp_pose in enumerate(pose_sequences):
+                temp_pose[:,:,0]=(temp_pose[:,:,0]/320)-1
+                temp_pose[:,:,1]=(temp_pose[:,:,1]/180)-1
+                temp=np.zeros((100,18,2))
+                temp[:,:,0]=x_coor
+                temp[:,:,1]=y_coor
+
                 label[index] = torch.from_numpy(temp_pose)
                 
                 temp_audio = np.array(audio_sequences[i])
