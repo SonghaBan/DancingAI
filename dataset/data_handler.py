@@ -39,9 +39,6 @@ class DanceDataset(torch.utils.data.Dataset):
             for i, temp_pose in enumerate(pose_sequences):
                 temp_pose[:,:,0]=(temp_pose[:,:,0]/320)-1
                 temp_pose[:,:,1]=(temp_pose[:,:,1]/180)-1
-                temp=np.zeros((100,18,2))
-                temp[:,:,0]=x_coor
-                temp[:,:,1]=y_coor
 
                 label[index] = torch.from_numpy(temp_pose)
                 
