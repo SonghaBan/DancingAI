@@ -7,26 +7,21 @@ import torch.utils.data
 import numpy as np
 import bisect
 import json
-
-def load_jsonfile(filename):
-    with open(filename, 'r') as of:
-        data = json.load(of)
-    return data
+from utils import load_jsonfile, load_audio, split_audio
 
 class DanceDataset(torch.utils.data.Dataset):
     def __init__(self, opt, train=True):
         file_location=opt.data
         pose_dict=load_jsonfile(file_location)
         
-        length=0
+        self.length=0
         for k,v in pose_dict.items():
-            length += len(v['pose'])
+            self.length += len(v['pose'])
 
-        self.length=length
         print(self.length)
         
-        target=torch.FloatTensor(length,50,1600).zero_() #music
-        label=torch.FloatTensor(length,50,18,2).zero_() #dance
+        target=torch.FloatTensor(self.length,50,1600).zero_() #music
+        label=torch.FloatTensor(self.length,50,18,2).zero_() #dance
         index=0
         
         keys=sorted(pose_dict.keys())
@@ -67,6 +62,43 @@ class DanceDataset(torch.utils.data.Dataset):
     def __len__(self):
         return self.length
 
+class AudioLoader(torch.utils.data.Dataset):
+    def __init__(self, filename):
+        audio = load_audio(filename)
+        audio_sequences = np.array(split_audio(audio))
+
+        self.length = len(audio_sequences)
+        print(self.length)
+        
+        target=torch.FloatTensor(self.length,50,1600).zero_() #music
+        index=0
+        
+        keys=sorted(pose_dict.keys())
+        for temp_audio in audio_sequences:
+            target[index] = torch.from_numpy(temp_pose)
+            
+            d = torch.from_numpy(temp_audio).type(torch.LongTensor)
+            target[index] = d.view(50, 1600)
+
+            index += 1
+        
+        self.audio=target
+        
+        self._length = 80000
+        
+        self.train = train
+        print("load the json file to dictionary (5s raw data)" )
+        # assign every *test_stride*th item to the test set
+
+
+    def __getitem__(self, idx):
+        #print("idx:",idx)
+        one_hot=self.audio[idx]
+        target=self.label[idx]          
+        return one_hot, target
+
+    def __len__(self):
+        return self.length
 
 def quantize_data(data, classes):
     mu_x = mu_law_encoding(data, classes)

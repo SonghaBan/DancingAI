@@ -14,13 +14,7 @@ import pandas as pd
 import glob, os
 import time
 import numpy as np
-
-def get_filelabel(filename):
-    flabel = os.path.basename(filename).split('.')[0]
-    if '-' in flabel:
-        flabel = flabel.split('-')[-1]
-    return flabel
-#    return filename.split('/')[-1].split('.')[0]
+from utils import *
 
 def extract_audio(filename):
     '''extract audio from the video and save as wav
@@ -237,11 +231,6 @@ class DataCleaner:
         print(f'done / {self.missing} missing frames, {self.wrong} misdetections fixed!')
         
         self.save()
-
-def load_jsonfile(filename):
-    with open(filename, 'r') as of:
-        data = json.load(of)
-    return data
 
 def split_pose(filename, s=5, fps=10):
     flabel = get_filelabel(filename)
