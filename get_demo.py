@@ -4,6 +4,7 @@ import torch.nn as nn
 import numpy as np
 from model.pose_generator_norm import Generator
 from dataset.data_handler import DanceDataset
+from dataset.lisa_dataset_test import DanceDataset
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torch.autograd import Variable

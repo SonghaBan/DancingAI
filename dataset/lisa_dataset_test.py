@@ -14,10 +14,11 @@ class DanceDataset(torch.utils.data.Dataset):
              file_location,
              train=True):
 
+        file_location = "dataset/lisa_revised_pose_pairs.json"
         pose_dict_boy=read_from_json(file_location)
         
         length=0
-        keys=['047','049']
+        keys=['047']
         for key in keys:
             sub_keys=sorted(pose_dict_boy[str(key)].keys())
             for sub_key in sub_keys:
