@@ -10,7 +10,7 @@ import glob
 import time
 import os
 import json
-
+import moviepy.editor as mpy
 '''
 compare three pose estimatino methods
 '''
@@ -22,23 +22,20 @@ cmd_26 = "python scripts/demo_inference.py --cfg configs/halpe_26/resnet/256x192
 cmd_openpose = "bin\OpenPoseDemo.exe --video ../../{} --disable_blending --write_json ../output_tmp/"
 
 
-files = glob.glob("data/final_videos/*.mp4")
-
-for f in files:
-    if f == 'data/final_videos\\10_Trim.mp4' or f == 'data/final_videos\\11_Trim.mp4':
-        continue
-    label = os.path.basename(f).split('.')[0]
-    os.chdir('PoseEstimation/AlphaPose')
-    print(f)
-    subprocess.call(cmd_fast.format(f))
-    os.rename('../output_fast/alphapose-results.json', '../output_fast/alphapose-results-fast-{}.json'.format(label))
-    time.sleep(10)
-    subprocess.call(cmd_26.format(f))
+def get_alphapose_17(filename, label):
+    subprocess.call(cmd_fast.format(filename))
+    try:
+        os.rename('../output_fast/alphapose-results.json', '../output_fast/alphapose-results-fast-{}.json'.format(label))
+    except FileExistsError:
+        os.remove('../output_fast/alphapose-results-fast-{}.json'.format(label))
+        os.rename('../output_fast/alphapose-results.json', '../output_fast/alphapose-results-fast-{}.json'.format(label))
+        
+def get_alphapose_26(filename, label):
+    subprocess.call(cmd_26.format(filename))
     os.rename('../output_halpe26/alphapose-results.json', '../output_halpe26/alphapose-results-halpe26-{}.json'.format(label))
-    time.sleep(10)
-    
-    os.chdir('../openpose')
-    subprocess.call(cmd_openpose.format(f))
+
+def get_openpose(filename, label):
+    subprocess.call(cmd_openpose.format(filename))
     tmpfiles = glob.glob('../output_tmp/*.json')
     data = []
     for tf in tmpfiles:
@@ -48,7 +45,57 @@ for f in files:
         os.remove(tf)
     with open('../output_openpose/{}.json'.format(label), 'w') as of:
         json.dump(data, of)
-    print(f, "done")
-    time.sleep(30)
-    os.chdir('../../')
+
+
+def rename_all():
+    files = glob.glob("data/final_videos/me/*.mp4")
+    for f in files:
+        os.rename(f, f.replace('.mp4','_Trim.mp4'))
+        
+def update_fps():
+    files = glob.glob("data/final_videos/me/*.mp4")
+    for f in files:
+        print(f)
+        video = mpy.VideoFileClip(f)
+        fps = video.fps
+        if fps < 29.9:
+            print('!!!',fps, f)
+            video.write_videofile('tmp.mp4', fps=30)
+            video.close()
+            
+            os.remove(f)
+            os.rename('tmp.mp4', f)
+            
+        
+        else:
+            video.close()
+            
+        os.chdir('PoseEstimation/AlphaPose')
+        label = os.path.basename(f).split('.')[0]
+        get_alphapose_17(f, label)
+        os.chdir('../../')
+        time.sleep(0.1)
+        
+        
+def main():
+    files = glob.glob("data/final_videos/me/*.mp4")
+    for f in files:
+        label = os.path.basename(f).split('.')[0]
+        os.chdir('PoseEstimation/AlphaPose')
+        print(f)
+        get_alphapose_17(f, label)
+        time.sleep(1)
+        
+#        get_alphapose_26(f, label)
+#        time.sleep(1)
+#        
+#        os.chdir('../openpose')
+#        get_openpose(f, label)
+        
+        print(f, "done")
+#        time.sleep(3)
+        os.chdir('../../')
     
+if __name__=="__main__":
+#    main()
+    update_fps()

@@ -44,23 +44,6 @@ def get_color_fast(idx):
 
     return color
 
-BODY_25_LINES = [
-    [17, 15, 0, 1, 8, 9, 10, 11, 22, 23],  # Right eye down to right leg
-    [11, 24],  # Right heel
-    [0, 16, 18],  # Left eye
-    [4, 3, 2, 1, 5, 6, 7],  # Arms
-    [8, 12, 13, 14, 19, 20],  # Left leg
-    [14, 21]  # Left heel
-]
-
-BODY_17_LINES = [
-    [0,1,3], #nose, lEye, lEar
-    [0,17],
-    [0,2,4], #nose, REye, REar
-    [5,6,8,10],
-    [5,7,9],
-    [15, 13, 11, 17, 12, 14, 16] #5-17
-]
 
 l_pair_17 = [
     (0, 1), (0, 2), (1, 3), (2, 4),  # Head
@@ -97,6 +80,16 @@ line_color_26 = np.array([(0, 215, 255), (0, 255, 204), (0, 134, 255), (0, 255, 
               (0, 127, 255), (255, 127, 77), (0, 77, 255), (255, 77, 36), 
               (0, 77, 255), (0, 77, 255), (0, 77, 255), (0, 77, 255), (255, 156, 127), (255, 156, 127)])/255
 
+l_pair_openpose = [
+    [1, 2], [1, 5], [2, 3], [3, 4], [5, 6], [6, 7], [1, 8], [8, 9], [9, 10],
+    [1, 11], [11, 12], [12, 13], [1, 0], [0, 14], [14, 16], [0, 15], [15, 17],
+    ]
+#for plot usage
+colors_openpose = np.array([
+    [255, 0, 0], [255, 85, 0], [255, 170, 0], [255, 255, 0], [170, 255, 0],
+    [85, 255, 0], [0, 255, 0], [0, 255, 85], [0, 255, 170], [0, 255, 255],
+    [0, 170, 255], [0, 85, 255], [0, 0, 255], [85, 0, 255], [170, 0, 255],
+    [255, 0, 255], [255, 0, 170], [255, 0, 85], [255, 0, 0]])/255
 def build_graph(lines):
     graph = {}
     for line in lines:
@@ -107,7 +100,7 @@ def build_graph(lines):
     return graph
 
 
-BODY_25_GRAPH = build_graph(BODY_25_LINES)
+#BODY_25_GRAPH = build_graph(BODY_25_LINES)
 
 
 def max_dim(doc, dim):
@@ -118,10 +111,51 @@ def max_dim(doc, dim):
         for val in numarr[dim::3]
     ))
     
+def make_video_openpose(data, save_video=True, output_filename="../test.mp4",fps=10):
+    width = 640
+    height = 360
+    joints = 18
+    print("make! fps:",fps, len(data))
     
+    arr = True if isinstance(data, np.ndarray) else False
+    
+    result = []
+    for frame in data:
+#        print(cur_idx, frame['image_id'])
+        
+        surface = gz.Surface(width=width, height=height, bg_color=(1,1,1))
+    
+        if arr:
+            pose = frame.tolist()
+        else:
+            n_group = int(len(frame['keypoints']) / joints)
+            pose = list(grouper(frame["keypoints"], n_group))
+        line_cnt = 0
+        l_pair = l_pair_openpose
+        line_color = colors_openpose
+        
+        for limb in l_pair:
+            x1, y1 = pose[limb[0]]
+            x2, y2 = pose[limb[1]]
+            line = gz.polyline(points=[(x1,y1), (x2,y2)], stroke_width = 5, stroke=line_color[line_cnt])
+#            print('line', line_cnt)
+            line_cnt += 1
+            line.draw(surface)
+        
+        for idx in range(len(pose)):
+#            print(idx)
+            x1, y1 = pose[idx]
+            joint = gz.circle(3, xy=[x1,y1], fill=(0,0,0))
+            joint.draw(surface)
+
+        result.append(surface.get_npimage())
+    
+    if save_video:
+        clip = mpy.ImageSequenceClip(result, fps=fps)
+        clip.write_videofile(output_filename, fps=fps, codec='mpeg4')   
 def make_frame_clean(data, save_video=True, joints=17,output_filename="../test.mp4",fps=30):
-    width = 600
-    height = 400
+    width = 640
+    height = 360
     print("make! fps:",fps, len(data))
     
     arr = True if isinstance(data, np.ndarray) else False
@@ -142,7 +176,7 @@ def make_frame_clean(data, save_video=True, joints=17,output_filename="../test.m
             n_group = int(len(frame['keypoints']) / joints)
             pose = list(grouper(frame["keypoints"], n_group))
         line_cnt = 0
-        if joints==17:
+        if joints==17 or joints == 18:
             l_pair = l_pair_17
             line_color = line_color_17
             p_color = p_color_17
@@ -153,7 +187,7 @@ def make_frame_clean(data, save_video=True, joints=17,output_filename="../test.m
         
         for limb in l_pair:
             
-            if limb[0] == joints:
+            if limb[0] == joints and joints == 17:
                 x1, y1 = (np.array(pose[5]) + np.array(pose[6])) / 2 #neck
             else:
                 x1, y1 = pose[limb[0]]
@@ -166,7 +200,7 @@ def make_frame_clean(data, save_video=True, joints=17,output_filename="../test.m
         for idx in range(len(pose)):
 #            print(idx)
             x1, y1 = pose[idx]
-            joint = gz.circle(3, xy=[x1,y1], fill=p_color[idx])
+            joint = gz.circle(2, xy=[x1,y1], fill=p_color[idx])
             joint.draw(surface)
 
         result.append(surface.get_npimage())
@@ -206,7 +240,7 @@ def make_frame(data, save_video=True, joints=17,output_filename="../test.mp4"):
         n_group = int(len(frame['keypoints']) / joints)
         pose = list(grouper(frame["keypoints"], n_group))
         line_cnt = 0
-        if joints==17:
+        if joints==17 or joints == 18:
             l_pair = l_pair_17
             line_color = line_color_17
             p_color = p_color_17
@@ -217,7 +251,7 @@ def make_frame(data, save_video=True, joints=17,output_filename="../test.mp4"):
         
         for limb in l_pair:
             
-            if limb[0] == joints:
+            if limb[0] == joints and joints == 17:
                 x1, y1, c1 = (np.array(pose[5]) + np.array(pose[6])) / 2 #neck
             else:
                 x1, y1, c1 = pose[limb[0]]
