@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from model.pose_generator_norm import Generator
-from dataset.data_handler import DanceDataset
+from dataset.data_handler import DanceDataset, AudioLoader
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torch.autograd import Variable
@@ -23,7 +23,7 @@ from matplotlib import pyplot as plt
 #import cv2
 from dataset.output_helper import save_2_batch_images
 import argparse
-from scipy.io.wavfile import write
+import scipy.io.wavfile as wav
 
 parser = argparse.ArgumentParser()
 
@@ -74,7 +74,16 @@ generator.eval()
 #generator.load_state_dict(torch.load(file_path, map_location=device))
 generator.load_state_dict(torch.load(file_path))
 generator.cuda()
-data=DanceDataset(args)
+
+def generate_dance(audio):
+    fake = generator(audio)
+    fake = fake.contiguous().cpu().detach().numpy()#1,50,36 
+    fake = fake.reshape([50,36])
+    return fake
+
+
+audiofile = "C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/audio/7.wav"
+data=AudioLoader()
 dataloader = torch.utils.data.DataLoader(data,
                                          batch_size=1,
                                          shuffle=False,
@@ -83,32 +92,27 @@ dataloader = torch.utils.data.DataLoader(data,
 criterion_pixelwise = torch.nn.L1Loss()
 count = 0
 total_loss=0.0
-img_orig = np.ones((360,640,3), np.uint8) * 255
-for i, (x,target) in enumerate(dataloader):
-    audio_out=x.view(-1) #80000
-    scaled=np.int16(audio_out)
-    
-    audio = Variable(x.type(Tensor).transpose(1,0))#50,1,1600
-    pose = Variable(target.type(Tensor))#1,50,18,2
-    pose=pose.view(1,50,36)
 
-    # GAN loss
-    fake = generator(audio)
-    loss_pixel = criterion_pixelwise(fake, pose)
-    total_loss+=loss_pixel.item()
+for i, x in enumerate(dataloader):
+    audio_out = x.view(-1) #80000
+    scaled = np.int16(audio_out)
+
+    audio = Variable(x.type(Tensor).transpose(1,0)) #50,1,1600
     
-    fake = fake.contiguous().cpu().detach().numpy()#1,50,36 
-    fake = fake.reshape([50,36])
+    fake = generate_dance(audio)
+
+    wav.write("tmp.wav", 16000, scaled)
+    fake_coors = fake.reshape([-1,18,2])
     
+    fake_coors[:,:,0] = (fake_coors[:,:,0]+1) * 320
+    fake_coors[:,:,1] = (fake_coors[:,:,1]+1 ) * 180
+    fake_coors = fake_coors.astype(int)
+
+
     if(count <= counter):
         write(output_dir+"/audio/{}.wav".format(i),16000,scaled)
-        real_coors = pose.cpu().numpy()
         fake_coors = fake
-        real_coors = real_coors.reshape([-1,18,2])
         fake_coors = fake_coors.reshape([-1,18,2])
-        real_coors[:,:,0] = (real_coors[:,:,0]+1) * 320
-        real_coors[:,:,1] = (real_coors[:,:,1]+1 ) * 180
-        real_coors = real_coors.astype(int)
         
         fake_coors[:,:,0] = (fake_coors[:,:,0]+1) * 320
         fake_coors[:,:,1] = (fake_coors[:,:,1]+1 ) * 180
@@ -117,5 +121,3 @@ for i, (x,target) in enumerate(dataloader):
         save_2_batch_images(real_coors,fake_coors,batch_num=count,save_dir_start=output_dir)
     count += 1
 
-final_loss=total_loss/count
-print("final_loss:",final_loss)

@@ -74,7 +74,7 @@ print(device)
 #generator.load_state_dict(torch.load(file_path, map_location=device))
 generator.load_state_dict(torch.load(file_path))
 generator.cuda()
-data=DanceDataset(args)
+data=DanceDataset(args, train=False)
 dataloader = torch.utils.data.DataLoader(data,
                                          batch_size=1,
                                          shuffle=False,

@@ -9,6 +9,8 @@ import bisect
 import json
 from utils import load_jsonfile, load_audio, split_audio
 
+testkeys = [7]
+
 class DanceDataset(torch.utils.data.Dataset):
     def __init__(self, opt, train=True):
         file_location=opt.data
@@ -26,6 +28,9 @@ class DanceDataset(torch.utils.data.Dataset):
         
         keys=sorted(pose_dict.keys())
         for key in keys:
+            if not train:
+                if int(key) not in testkeys:
+                    continue
             #if int(key) != 2:
             #    continue
             pose_sequences = np.array(pose_dict[key]['pose'])
@@ -94,8 +99,7 @@ class AudioLoader(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         #print("idx:",idx)
         one_hot=self.audio[idx]
-        target=self.label[idx]          
-        return one_hot, target
+        return one_hot
 
     def __len__(self):
         return self.length
