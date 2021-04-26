@@ -1,5 +1,4 @@
 import os
-import os.path
 import math
 import threading
 import torch
@@ -8,8 +7,10 @@ import numpy as np
 import bisect
 import json
 from utils import load_jsonfile, load_audio, split_audio
+join = os.path.join
+cur_d = os.path.dirname(__file__)
 
-testkeys = [7]
+DATA_SCORE = load_jsonfile(join(cur_d, 'datascore.json'))
 
 class DanceDataset(torch.utils.data.Dataset):
     def __init__(self, opt, train=True):
@@ -137,9 +138,3 @@ def save_to_json(dic,target_dir):
     json.dump(dumped, file)
     file.close()
     
-def read_from_json(target_dir):
-    f = open(target_dir,'r')
-    data = json.load(f)
-    data = json.loads(data)
-    f.close()
-    return data 
