@@ -15,6 +15,8 @@ import math
 import itertools
 import time
 import datetime
+import json
+from utils import make_pose_video, attach_audio
 
 join = os.path.join
 cur_d = os.path.dirname(__file__)
@@ -43,7 +45,7 @@ parser.add_argument(
         type=str
     )
 
-parser.add_argument("--count", type=int, default=100)#100
+parser.add_argument("--count", type=int, default=10)#100
 parser.add_argument(
         "--output",
         default=join(cur_d,"output"),
@@ -81,43 +83,40 @@ def generate_dance(audio):
     fake = fake.reshape([50,36])
     return fake
 
+def save_output(data):
+    with open(filename, 'w') as of:
+        json.dump(data, of)
 
-audiofile = "C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/audio/7.wav"
-data=AudioLoader()
-dataloader = torch.utils.data.DataLoader(data,
-                                         batch_size=1,
-                                         shuffle=False,
-                                         num_workers=0,
-                                         pin_memory=False)
-criterion_pixelwise = torch.nn.L1Loss()
-count = 0
-total_loss=0.0
+def test(audiofile="C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/audio/7.wav"):
+    data=AudioLoader(audiofile)
+    dataloader = torch.utils.data.DataLoader(data,
+                                             batch_size=1,
+                                             shuffle=False,
+                                             num_workers=0,
+                                             pin_memory=False)
 
-for i, x in enumerate(dataloader):
-    audio_out = x.view(-1) #80000
-    scaled = np.int16(audio_out)
+    for i, x in enumerate(dataloader):
+        if i > counter:
+            break
+        audio_out = x.view(-1) #80000
+        scaled = np.int16(audio_out)
 
-    audio = Variable(x.type(Tensor).transpose(1,0)) #50,1,1600
-    
-    fake = generate_dance(audio)
+        audio = Variable(x.type(Tensor).transpose(1,0)) #50,1,1600
+        
+        fake = generate_dance(audio)
 
-    wav.write("tmp.wav", 16000, scaled)
-    fake_coors = fake.reshape([-1,18,2])
-    
-    fake_coors[:,:,0] = (fake_coors[:,:,0]+1) * 320
-    fake_coors[:,:,1] = (fake_coors[:,:,1]+1 ) * 180
-    fake_coors = fake_coors.astype(int)
-
-
-    if(count <= counter):
-        write(output_dir+"/audio/{}.wav".format(i),16000,scaled)
-        fake_coors = fake
-        fake_coors = fake_coors.reshape([-1,18,2])
+        wav.write("tmp.wav", 16000, scaled)
+        fake_coors = fake.reshape([-1,18,2])
         
         fake_coors[:,:,0] = (fake_coors[:,:,0]+1) * 320
         fake_coors[:,:,1] = (fake_coors[:,:,1]+1 ) * 180
-        fake_coors = fake_coors.astype(int)
-        
-        save_2_batch_images(real_coors,fake_coors,batch_num=count,save_dir_start=output_dir)
-    count += 1
+        fake_coors = fake_coors.astype(int).tolist()
 
+        save_output(fake_coors)
+
+        outfile = join(output_dir, f"{i}.mp4")
+        make_pose_video(fake_coors, output_filename=outfile)
+        attach_audio(outfile, "tmp.wav")
+            
+if __name__ == '__main__':
+    test()
