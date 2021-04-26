@@ -11,11 +11,20 @@ join = os.path.join
 cur_d = os.path.dirname(__file__)
 
 DATA_SCORE = load_jsonfile(join(cur_d, 'datascore.json'))
+pass_score = 3
 
 class DanceDataset(torch.utils.data.Dataset):
     def __init__(self, opt, train=True):
         file_location=opt.data
         pose_dict=load_jsonfile(file_location)
+
+        for k,v in DATA_SCORE.items():
+            if train:
+                if v < pass_score:
+                    del pose_dict[k]
+            else:
+                if v >= pass_score:
+                    del pose_dict[k]
         
         self.length=0
         for k,v in pose_dict.items():
@@ -29,11 +38,6 @@ class DanceDataset(torch.utils.data.Dataset):
         
         keys=sorted(pose_dict.keys())
         for key in keys:
-            if not train:
-                if int(key) not in testkeys:
-                    continue
-            #if int(key) != 2:
-            #    continue
             pose_sequences = np.array(pose_dict[key]['pose'])
             audio_sequences = np.array(pose_dict[key]['music'])
 
