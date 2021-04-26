@@ -1,9 +1,9 @@
 import os
 import json
 import gizeh as gz
-import numpy as numpy
+import numpy as np
 import moviepy.editor as mpy
-
+import scipy.io.wavfile as wav
 def get_filelabel(filename):
     flabel = os.path.basename(filename).split('.')[0]
     if '-' in flabel:
@@ -31,6 +31,16 @@ def split_audio(audio, s=5):
         newaudio.append(audio[i*audio_chunk:(i+1)*audio_chunk].tolist())
         i += 1
     return newaudio
+
+RED = (0, 0, 255)
+GREEN = (0, 255, 0)
+BLUE = (255, 0, 0)
+CYAN = (255, 255, 0)
+YELLOW = (0, 255, 255)
+ORANGE = (0, 165, 255)
+PURPLE = (255, 0, 255)
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 
 
 l_pair_openpose = [
@@ -71,7 +81,11 @@ def make_pose_video(data, output_filename="../test.mp4", save_video=True, fps=10
         for idx in range(len(frame)):
 #            print(idx)
             x1, y1 = frame[idx]
-            joint = gz.circle(3, xy=[x1,y1], fill=(0,0,0))
+            if idx < 14:
+                pcolor = np.array(BLACK) / 255
+            else:
+                pcolor = np.array(PURPLE) / 255
+            joint = gz.circle(3, xy=[x1,y1], fill=pcolor)
             joint.draw(surface)
 
         result.append(surface.get_npimage())

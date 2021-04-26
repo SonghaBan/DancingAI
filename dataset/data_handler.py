@@ -78,10 +78,7 @@ class AudioLoader(torch.utils.data.Dataset):
         target=torch.FloatTensor(self.length,50,1600).zero_() #music
         index=0
         
-        keys=sorted(pose_dict.keys())
         for temp_audio in audio_sequences:
-            target[index] = torch.from_numpy(temp_pose)
-            
             d = torch.from_numpy(temp_audio).type(torch.LongTensor)
             target[index] = d.view(50, 1600)
 
@@ -91,7 +88,6 @@ class AudioLoader(torch.utils.data.Dataset):
         
         self._length = 80000
         
-        self.train = train
         print("load the json file to dictionary (5s raw data)" )
         # assign every *test_stride*th item to the test set
 

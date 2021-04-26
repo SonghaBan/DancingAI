@@ -48,7 +48,7 @@ parser.add_argument(
 parser.add_argument("--count", type=int, default=10)#100
 parser.add_argument(
         "--output",
-        default=join(cur_d,"output"),
+        default=join(cur_d,"../output"),
         metavar="FILE",
         help="path to output",
         type=str
@@ -64,11 +64,11 @@ try:
 except OSError:
     pass
 
-audio_path=output_dir + "/audio"
-try:
-    os.makedirs(audio_path)
-except OSError:
-    pass
+#audio_path=output_dir + "/audio"
+#try:
+#    os.makedirs(audio_path)
+#except OSError:
+#    pass
 
 Tensor = torch.cuda.FloatTensor
 generator = Generator(1)
@@ -83,11 +83,11 @@ def generate_dance(audio):
     fake = fake.reshape([50,36])
     return fake
 
-def save_output(data):
+def save_output(data, filename):
     with open(filename, 'w') as of:
         json.dump(data, of)
 
-def test(audiofile="C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/audio/7.wav"):
+def test(audiofile="C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/audio/92_Trim.wav"):
     data=AudioLoader(audiofile)
     dataloader = torch.utils.data.DataLoader(data,
                                              batch_size=1,
@@ -95,28 +95,37 @@ def test(audiofile="C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/a
                                              num_workers=0,
                                              pin_memory=False)
 
+    result = []
+    outaudio = []
     for i, x in enumerate(dataloader):
-        if i > counter:
+        if i > counter and counter:
             break
         audio_out = x.view(-1) #80000
-        scaled = np.int16(audio_out)
+        outaudio.extend(audio_out)
 
         audio = Variable(x.type(Tensor).transpose(1,0)) #50,1,1600
         
         fake = generate_dance(audio)
 
-        wav.write("tmp.wav", 16000, scaled)
+        #wav.write("tmp.wav", 16000, scaled)
         fake_coors = fake.reshape([-1,18,2])
         
         fake_coors[:,:,0] = (fake_coors[:,:,0]+1) * 320
         fake_coors[:,:,1] = (fake_coors[:,:,1]+1 ) * 180
         fake_coors = fake_coors.astype(int).tolist()
 
-        save_output(fake_coors)
+        save_output(fake_coors, join(output_dir, f"{i}.json"))
 
-        outfile = join(output_dir, f"{i}.mp4")
-        make_pose_video(fake_coors, output_filename=outfile)
-        attach_audio(outfile, "tmp.wav")
+        result.extend(fake_coors)
+        
+
+    outaudio = np.int16(outaudio)
+    wav.write("tmp.wav", 16000, outaudio)
+
+    outfile = join(output_dir, "result.mp4")
+    make_pose_video(result, output_filename=outfile)
+    attach_audio(outfile, "tmp.wav")
+    os.remove("tmp.wav")
             
 if __name__ == '__main__':
     test()
