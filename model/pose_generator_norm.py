@@ -24,13 +24,17 @@ class res_linear_layer(nn.Module):
         return output
         
 class hr_pose_generator(nn.Module):
-    def __init__(self,batch,hidden_channel_num=64,input_c = 266,linear_hidden = 1024):
+    def __init__(self,batch,hidden_channel_num=64,input_c = 266,linear_hidden = 1024,encoder='gru'):
         super(hr_pose_generator,self).__init__()
         self.batch=batch
         #self.relu = nn.ReLU()
         #self.decoder = nn.GRU(bidirectional=True,hidden_size=36, input_size=266,num_layers= 3, batch_first=True)
         #self.fc=nn.Linear(72,36)
-        self.rnn_noise = nn.GRU( 10, 10, batch_first=True)
+        # TODO! change here!!!!!
+        if encoder == 'gru':
+            self.rnn_noise = nn.GRU( 10, 10, batch_first=True)
+        elif encoder == 'lstm':
+            self.rnn_noise = nn.LSTM(10, 10, batch_first=True)
         self.rnn_noise_squashing = nn.Tanh()
         # state size. hidden_channel_num*8 x 360 x 640
         self.layer0 = nn.Linear(266,linear_hidden)
@@ -66,10 +70,10 @@ class hr_pose_generator(nn.Module):
         
 
 class Generator(nn.Module):
-    def __init__(self,batch):
+    def __init__(self,batch, encoder='gru'):
         super(Generator,self).__init__()    
-        self.audio_encoder=RNN(batch)
-        self.pose_generator=hr_pose_generator(batch)
+        self.audio_encoder=RNN(batch, encoder)
+        self.pose_generator=hr_pose_generator(batch, encoder=encoder)
         self.batch=batch
 
     def forward(self,input):

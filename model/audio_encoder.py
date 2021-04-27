@@ -89,10 +89,13 @@ class Encoder(nn.Module):
         return x.squeeze()
     
 class RNN(nn.Module):
-    def __init__(self,batch):
+    def __init__(self,batch, encoder='gru'):
         super(RNN, self).__init__()
         self.encoder = Encoder()
-        self.rnn = nn.GRU(bidirectional=True,hidden_size=256, input_size=256,num_layers= 2, batch_first=True)
+        if encoder == 'gru' :
+            self.rnn = nn.GRU(bidirectional=True,hidden_size=256, input_size=256,num_layers= 2, batch_first=True)
+        elif encoder == 'lstm':
+            self.rnn = nn.LSTM(bidirectional=True,hidden_size=256, input_size=256,num_layers=2, batch_first=True)
         #self.rnn = nn.GRU(hidden_size=256, input_size=256,num_layers= 2, batch_first=True)
         self.fc = nn.Linear(512, 256)
         self.batch=batch

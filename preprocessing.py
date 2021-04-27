@@ -292,7 +292,7 @@ def split_all_files():
 def normalize_pose(filename):
     flabel = get_filelabel(filename)
     data = load_jsonfile(filename)
-    width, height = get_video_size(f"data/final_videos/{flabel}.mp4")
+    # width, height = get_video_size(f"data/final_videos/{flabel}.mp4")
     dancer_sizes = []
     prev = None
     diff = None
@@ -420,7 +420,7 @@ def get_video_size(filename):
     video_clip = mpy.VideoFileClip(filename)
     return video_clip.size
     
-def normalize_all_files(process=6):
+def normalize_all_files(process=8):
     files = glob.glob('data/fixed_pose/*.json')
     print(files)
     jobs = []
@@ -454,9 +454,9 @@ def normalize_all_audio():
         normalize_audio(filename)
           
 def main():
-#    extract_all_audio()
-#    clean_all_files()
-#    normalize_all_audio()
+    extract_all_audio()
+    clean_all_files()
+    normalize_all_audio()
     normalize_all_files()
     split_all_files()
 

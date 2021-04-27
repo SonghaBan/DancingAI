@@ -31,6 +31,9 @@ from tensorboardX import SummaryWriter
 Tensor = torch.cuda.FloatTensor
 
 from net.st_gcn_perceptual import Model
+
+useGCN = True
+
 class GCNLoss(nn.Module):
     def __init__(self,opt):
         super(GCNLoss, self).__init__()
@@ -42,13 +45,18 @@ class GCNLoss(nn.Module):
         self.criterion = nn.L1Loss()
         self.weights = [20.0 ,5.0 ,1.0 ,1.0 ,1.0, 1.0, 1.0, 1.0, 1.0, 1.0]  #10 output      
 
-    def forward(self, x, y):              
-        x_gcn, y_gcn = self.gcn.extract_feature(x), self.gcn.extract_feature(y)
+    def forward(self, x, y):
         loss = 0
-        for i in range(len(x_gcn)):
-            loss_state = self.weights[i] * self.criterion(x_gcn[i], y_gcn[i].detach())  
-            #print("VGG_loss "+ str(i),loss_state.item())
-            loss += loss_state       
+        if useGCN:        
+            x_gcn, y_gcn = self.gcn.extract_feature(x), self.gcn.extract_feature(y)
+            for i in range(len(x_gcn)):
+                loss_state = self.weights[i] * self.criterion(x_gcn[i], y_gcn[i].detach())
+                loss += loss_state
+        else:
+            for i in range(len(x)):
+                loss_state = self.criterion(x, y)
+                #print("VGG_loss "+ str(i),loss_state.item())
+                loss += loss_state       
         return loss
 
 class HCNLoss(nn.Module):
@@ -157,8 +165,10 @@ def train(generator,frame_discriminator,seq_discriminator,opt):
             loss_seq= adversarial_loss(seq_fake,seq_valid)
             loss_pixel = criterion_pixelwise(fake, pose)
             loss_GCN = VGGLoss(fake,pose)
+            # loss_GCN = 0
             loss_Frame_D = D_Feature(seq_discriminator, fake, pose)
             # Total loss
+            # loss_G = loss_frame + loss_seq + loss_Frame_D + opt.alpha*loss_pixel
             loss_G = loss_frame + loss_seq + loss_Frame_D + opt.alpha*loss_pixel + opt.lambda_grad*loss_GCN 
             loss_G.backward()
             optimizer_G.step()
@@ -222,6 +232,7 @@ def train(generator,frame_discriminator,seq_discriminator,opt):
             writer.add_scalar('iteration/VGGLoss', loss_GCN.item(), batches_now)
             writer.add_scalar('iteration/D_Feature_Loss', loss_Frame_D.item(), batches_now)
             print("Epoch {} {}, GLoss: {}, L1Loss: {}, D_Feature_Loss {}, VGG_Loss {}, D1Loss: {}, D2Loss: {}  ".format(epoch , batches_done , loss_G.item(),loss_pixel.item(),loss_Frame_D.item(),loss_GCN.item(),loss_D1.item(),loss_D2.item()))
+            # print("Epoch {} {}, GLoss: {}, L1Loss: {}, D_Feature_Loss {}, D1Loss: {}, D2Loss: {}  ".format(epoch , batches_done , loss_G.item(),loss_pixel.item(),loss_Frame_D.item(),loss_D1.item(),loss_D2.item()))
                 
         if (epoch+1)%opt.gap_save==0:
             save_models(epoch,opt)
@@ -250,16 +261,16 @@ if __name__ == '__main__':
     dataloader = torch.utils.data.DataLoader(data,
                                          batch_size=opt.batch_size,
                                          shuffle=True,
-                                         num_workers=16,
+                                         num_workers=8,
                                          pin_memory=False,
                                          drop_last=True
                                         )
     
     
     #init model
-    generator = Generator(opt.batch_size)
+    generator = Generator(opt.batch_size, opt.encoder)
     frame_discriminator = HCN()
-    seq_discriminator=seq_discriminator(opt.batch_size)
+    seq_discriminator=seq_discriminator(opt.batch_size, opt.encoder)
 
     optimizer_G = torch.optim.Adam(generator.parameters(), lr= opt.lr_g)
     optimizer_D1 = torch.optim.Adam(frame_discriminator.parameters(), lr= opt.lr_d_frame)

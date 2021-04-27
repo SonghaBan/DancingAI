@@ -34,9 +34,9 @@ class SelfAttentiveEncoder(nn.Module):
         return self.bilstm.init_hidden(bsz)
 
 class seq_discriminator(nn.Module):
-    def __init__(self,batch):
+    def __init__(self,batch, encoder='gru'):
         super(seq_discriminator,self).__init__()
-        self.audio_encoder=RNN(batch)
+        self.audio_encoder=RNN(batch, encoder)
         self.pose_encoder=HCN()#input (batch,2,50,18,1)
         self.attention = SelfAttentiveEncoder()
         self.conv1d = nn.Conv1d(in_channels=2,out_channels=1,kernel_size=2)

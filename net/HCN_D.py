@@ -5,12 +5,15 @@ import torch.nn.functional as F
 from model.HCN_encoder import HCN
 
 class seq_discriminator(nn.Module):
-    def __init__(self,batch):
+    def __init__(self,batch,encoder='gru'):
         super(seq_discriminator,self).__init__()
         self.audio_encoder=RNN(batch)
         #self.image_encoder=image_encoder()#1,50,256
         self.pose_encoder=HCN()#input (batch,2,50,18,1)
-        self.pose_rnn = nn.GRU(bidirectional=True,hidden_size=256, input_size=256,num_layers= 2, batch_first=True)
+        if encoder == 'gru':
+            self.pose_rnn = nn.GRU(bidirectional=True,hidden_size=256, input_size=256,num_layers= 2, batch_first=True)
+        elif encoder == 'lstm':
+            self.pose_rnn = nn.LSTM(bidirectional=True,hidden_size=256, input_size=256,num_layers= 2, batch_first=True)
         self.pose_fc = nn.Linear(512,256)
         self.conv1d = nn.Conv1d(in_channels=2,out_channels=1,kernel_size=2)
         #self.fc1=nn.Linear(512,256)

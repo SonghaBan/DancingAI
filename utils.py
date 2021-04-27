@@ -84,7 +84,7 @@ def make_pose_video(data, output_filename="../test.mp4", save_video=True, fps=10
             if idx < 14:
                 pcolor = np.array(BLACK) / 255
             else:
-                pcolor = np.array(PURPLE) / 255
+                pcolor = np.array(BLACK) / 255
             joint = gz.circle(3, xy=[x1,y1], fill=pcolor)
             joint.draw(surface)
 

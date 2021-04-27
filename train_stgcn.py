@@ -66,7 +66,7 @@ for epoch in range(1, epochs+1):
         print('ysize', y.size())
         print(y)
         bsz,time,feature = y.size()
-        y = y.view(bsz, time, 17, 2)
+        y = y.view(bsz, time, 18, 2)
         l = loss(y, target)
         l.backward()
         optimizer.step()
@@ -76,7 +76,8 @@ for epoch in range(1, epochs+1):
     # val_loss = evaluate_model(stgcn, loss, val_x)
     # if val_loss < min_val_loss:
     #     min_val_loss = val_loss
-    torch.save(stgcn.state_dict(), save_path)
+    if epoch % 50 == 0:
+        torch.save(stgcn.state_dict(), save_path)
     print("epoch", epoch, ", train loss:", l_sum / n)
 
 

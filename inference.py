@@ -16,7 +16,7 @@ import itertools
 import time
 import datetime
 import json
-from utils import make_pose_video, attach_audio
+from utils import make_pose_video, attach_audio, get_filelabel
 
 join = os.path.join
 cur_d = os.path.dirname(__file__)
@@ -30,8 +30,16 @@ import scipy.io.wavfile as wav
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
+        "--input",
+        default=7,
+        metavar="FILE",
+        help="path to pth file",
+        type=str
+    )
+
+parser.add_argument(
         "--model",
-        default=join(cur_d, "log/test/generator_0400.pth"),
+        default=join(cur_d, "log/lstm/generator_0400.pth"),
         metavar="FILE",
         help="path to pth file",
         type=str
@@ -59,6 +67,7 @@ file_path=args.model
 counter=args.count
 print(file_path)
 output_dir=args.output
+input_file = join(cur_d, f"C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/audio/{args.input}_Trim.wav")
 try:
     os.makedirs(output_dir)
 except OSError:
@@ -71,7 +80,7 @@ except OSError:
 #    pass
 
 Tensor = torch.cuda.FloatTensor
-generator = Generator(1)
+generator = Generator(1, encoder='lstm')
 generator.eval()
 #generator.load_state_dict(torch.load(file_path, map_location=device))
 generator.load_state_dict(torch.load(file_path))
@@ -87,7 +96,7 @@ def save_output(data, filename):
     with open(filename, 'w') as of:
         json.dump(data, of)
 
-def test(audiofile="C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/audio/92_Trim.wav"):
+def test(audiofile="C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/audio/7_Trim.wav"):
     data=AudioLoader(audiofile)
     dataloader = torch.utils.data.DataLoader(data,
                                              batch_size=1,
@@ -122,10 +131,10 @@ def test(audiofile="C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/a
     outaudio = np.int16(outaudio)
     wav.write("tmp.wav", 16000, outaudio)
 
-    outfile = join(output_dir, "result.mp4")
+    outfile = join(output_dir, f"result_{get_filelabel(audiofile)}.mp4")
     make_pose_video(result, output_filename=outfile)
     attach_audio(outfile, "tmp.wav")
     os.remove("tmp.wav")
             
 if __name__ == '__main__':
-    test()
+    test(input_file)
