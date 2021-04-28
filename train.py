@@ -15,6 +15,7 @@ import math
 import itertools
 import time
 import datetime
+import glob
 
 #load model
 from model.HCN_D import seq_discriminator
@@ -22,7 +23,7 @@ from model.local_HCN_frame_D import HCN
 from model.pose_generator_norm import Generator#input 50,1,1600
 
 #load dataset
-from dataset.data_handler import DanceDataset #audio input 50*1*1600
+from dataset.data_handler import DanceDataset
 from torch.utils.data import DataLoader
 from torchvision import datasets
 
@@ -32,7 +33,10 @@ Tensor = torch.cuda.FloatTensor
 
 from net.st_gcn_perceptual import Model
 
-useGCN = True
+useGCN = False
+
+join = os.path.join
+cur_d = os.path.dirname(__file__)
 
 class GCNLoss(nn.Module):
     def __init__(self,opt):
@@ -135,7 +139,14 @@ def train(generator,frame_discriminator,seq_discriminator,opt):
     VGGLoss = GCNLoss(opt)
     D_Feature = HCNLoss()
     index=0
-    for epoch in range(opt.niter):
+
+    if opt.resume:
+        filename = sorted(glob.glob(join(opt.out, 'generator_*.pth')))[-1]
+        startepoch = int(filename.split('generator_')[1].split('.')[0])
+    else:
+        startepoch = 0
+
+    for epoch in range(startepoch, opt.niter):
         batches_done=0
         total_loss1 = 0.0
         total_loss2 = 0.0
@@ -271,6 +282,14 @@ if __name__ == '__main__':
     generator = Generator(opt.batch_size, opt.encoder)
     frame_discriminator = HCN()
     seq_discriminator=seq_discriminator(opt.batch_size, opt.encoder)
+
+    if opt.resume:
+        files = glob.glob(join(opt.out, 'generator_*.pth'))
+        generator.load_state_dict(torch.load(sorted(files)[-1]))
+        files = glob.glob(join(opt.out, 'frame_*.pth'))
+        frame_discriminator.load_state_dict(torch.load(sorted(files)[-1]))
+        files = glob.glob(join(opt.out, 'sequence_*.pth'))
+        seq_discriminator.load_state_dict(torch.load(sorted(files)[-1]))
 
     optimizer_G = torch.optim.Adam(generator.parameters(), lr= opt.lr_g)
     optimizer_D1 = torch.optim.Adam(frame_discriminator.parameters(), lr= opt.lr_d_frame)

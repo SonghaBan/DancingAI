@@ -23,5 +23,6 @@ def get_arguments():
     parser.add_argument('--alpha',type=float, help='reconstruction loss weight',default=200)
 
     parser.add_argument('--encoder', type=str, help='gru, lstm, or tcn', default='gru')
+    parser.add_argument('--resume', action='store_true', help='load weights and continue training')
     return parser
  

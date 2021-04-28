@@ -39,7 +39,7 @@ parser.add_argument(
 
 parser.add_argument(
         "--model",
-        default=join(cur_d, "log/lstm/generator_0400.pth"),
+        default=join(cur_d, "log/lstm_gcn/generator_0800.pth"),
         metavar="FILE",
         help="path to pth file",
         type=str
