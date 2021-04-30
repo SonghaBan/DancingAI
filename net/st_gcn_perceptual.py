@@ -32,13 +32,14 @@ class Model(nn.Module):
 
         # load graph
         self.graph = Graph(**graph_args)
-        A = torch.tensor(self.graph.A, dtype=torch.float32, requires_grad=False)
+        A = torch.tensor(self.graph.A, dtype=torch.float32, requires_grad=False) #A: (3,18,18)
         self.register_buffer('A', A)
 
         # build networks
         spatial_kernel_size = A.size(0)
         temporal_kernel_size = 9
         kernel_size = (temporal_kernel_size, spatial_kernel_size)
+        print('a', A.size())
         self.data_bn = nn.BatchNorm1d(in_channels * A.size(1))
         kwargs0 = {k: v for k, v in kwargs.items() if k != 'dropout'}
         self.st_gcn_networks = nn.ModuleList((
@@ -91,7 +92,7 @@ class Model(nn.Module):
         x = self.fcn(x)
         x = x.view(x.size(0), -1)
 
-        return x
+        return x #16,16
 
     def extract_feature(self, x):
         #in bsz,50,36

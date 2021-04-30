@@ -16,6 +16,7 @@ import math
 import itertools
 import time
 import datetime
+from inference import generate_dance, save_output
 
 from matplotlib import pyplot as plt
 #import cv2
@@ -28,8 +29,16 @@ parser = argparse.ArgumentParser()
 device = torch.device("cpu")
 
 parser.add_argument(
+        "--input",
+        default=7,
+        metavar="FILE",
+        help="path to pth file",
+        type=str
+    )
+
+parser.add_argument(
         "--model",
-        default="./log/test/generator_0400.pth",
+        default=join(cur_d, "log/lstm_gcn/generator_0800.pth"),
         metavar="FILE",
         help="path to pth file",
         type=str
@@ -37,16 +46,16 @@ parser.add_argument(
 
 parser.add_argument(
         "--data",
-        default="./dataset/dance_music_paired.json",
+        default=join(cur_d,"dataset/dance_music_paired.json"),
         metavar="FILE",
         help="path to pth file",
         type=str
     )
 
-parser.add_argument("--count", type=int, default=100)#100
+parser.add_argument("--count", type=int, default=10)#100
 parser.add_argument(
         "--output",
-        default="C:/Users/songhama/Documents/_School/Spring2021/Thesis/code/Dance-Synthesis/output",
+        default=join(cur_d,"../output"),
         metavar="FILE",
         help="path to output",
         type=str

@@ -132,6 +132,7 @@ def compute_gradient_penalty_frame(D, real_samples, fake_samples):
     return gradient_penalty
     
 def train(generator,frame_discriminator,seq_discriminator,opt):
+    print('in')
     batch_size = opt.batch_size
     writer = SummaryWriter(log_dir = opt.out_tensorboard)
     adversarial_loss = torch.nn.BCELoss()
@@ -145,6 +146,7 @@ def train(generator,frame_discriminator,seq_discriminator,opt):
         startepoch = int(filename.split('generator_')[1].split('.')[0])
     else:
         startepoch = 0
+    print(startepoch, opt.niter)
 
     for epoch in range(startepoch, opt.niter):
         batches_done=0
@@ -152,10 +154,13 @@ def train(generator,frame_discriminator,seq_discriminator,opt):
         total_loss2 = 0.0
         total_loss3 = 0.0
         total_loss4 = 0.0
-        for i, (x,target) in enumerate(dataloader):
+        for i, (x,target,initp) in enumerate(dataloader):
             audio = Variable(x.type(Tensor).transpose(1,0))#50,1,1600
             pose = Variable(target.type(Tensor))#1,50,18,2
             pose=pose.view(batch_size,50,36)
+            initp = Variable(initp.type(Tensor))
+
+            initp = initp.view(batch_size, 18, 2)
             # Adversarial ground truths
             frame_valid = Variable(Tensor(np.ones((batch_size,16))),requires_grad=False)                
             frame_fake_gt = Variable(Tensor(np.zeros((batch_size,16))),requires_grad=False)
@@ -169,7 +174,7 @@ def train(generator,frame_discriminator,seq_discriminator,opt):
             optimizer_G.zero_grad()
 
             # GAN loss
-            fake = generator(audio).contiguous()#1,50,36
+            fake = generator(audio, initp).contiguous()#1,50,36
             frame_fake = frame_discriminator(fake)#1,50
             seq_fake=seq_discriminator(fake,audio)#1
             loss_frame = adversarial_loss(frame_fake, frame_valid)

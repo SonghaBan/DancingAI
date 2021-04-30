@@ -92,12 +92,18 @@ class RNN(nn.Module):
     def __init__(self,batch, encoder='gru'):
         super(RNN, self).__init__()
         self.encoder = Encoder()
-        if encoder == 'gru' :
-            self.rnn = nn.GRU(bidirectional=True,hidden_size=256, input_size=256,num_layers= 2, batch_first=True)
-        elif encoder == 'lstm':
+        if 'lstm' in encoder:
             self.rnn = nn.LSTM(bidirectional=True,hidden_size=256, input_size=256,num_layers=2, batch_first=True)
+        elif 'mix' in encoder:
+            self.rnn = nn.LSTM(bidirectional=True,hidden_size=256, input_size=256,num_layers=2, batch_first=True)
+        else:
+            self.rnn = nn.GRU(bidirectional=True,hidden_size=256, input_size=256,num_layers= 2, batch_first=True)
+            
         #self.rnn = nn.GRU(hidden_size=256, input_size=256,num_layers= 2, batch_first=True)
-        self.fc = nn.Linear(512, 256)
+        if 'min' in encoder:
+            self.fc = nn.Linear(512, 128)
+        else:
+            self.fc = nn.Linear(512, 256)
         self.batch=batch
     
     def forward(self, x):
@@ -108,7 +114,7 @@ class RNN(nn.Module):
         output=output.view(50,self.batch,-1).transpose(0,1)
         output, _ = self.rnn(output)
         output = output.contiguous().view(self.batch,output.shape[1],-1)
-        output = self.fc(output)
+        output = self.fc(output) #[1, 50, 256]
         return output.contiguous()
         
         

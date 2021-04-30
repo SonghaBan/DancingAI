@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument(
         "--input",
-        default=7,
+        default="2,4,7,56,68,116,125,117,13,41",
         metavar="FILE",
         help="path to pth file",
         type=str
@@ -39,7 +39,7 @@ parser.add_argument(
 
 parser.add_argument(
         "--model",
-        default=join(cur_d, "log/lstm_gcn/generator_0800.pth"),
+        default=join(cur_d, "log/lstm/generator_0400.pth"),
         metavar="FILE",
         help="path to pth file",
         type=str
@@ -61,13 +61,18 @@ parser.add_argument(
         help="path to output",
         type=str
     )
+parser.add_argument(
+        "--encoder",
+        default=join(cur_d,"gru"),
+        type=str
+    )
 args = parser.parse_args()
 
 file_path=args.model
 counter=args.count
 print(file_path)
 output_dir=args.output
-input_file = join(cur_d, f"C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/audio/{args.input}_Trim.wav")
+
 try:
     os.makedirs(output_dir)
 except OSError:
@@ -80,14 +85,14 @@ except OSError:
 #    pass
 
 Tensor = torch.cuda.FloatTensor
-generator = Generator(1, encoder='lstm')
+generator = Generator(1, encoder=args.encoder)
 generator.eval()
 #generator.load_state_dict(torch.load(file_path, map_location=device))
 generator.load_state_dict(torch.load(file_path))
 generator.cuda()
 
-def generate_dance(audio):
-    fake = generator(audio)
+def generate_dance(audio, initp):
+    fake = generator(audio, initp)
     fake = fake.contiguous().cpu().detach().numpy()#1,50,36 
     fake = fake.reshape([50,36])
     return fake
@@ -106,6 +111,7 @@ def test(audiofile="C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/a
 
     result = []
     outaudio = []
+    prevp = None
     for i, x in enumerate(dataloader):
         if i > counter and counter:
             break
@@ -114,10 +120,18 @@ def test(audiofile="C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/a
 
         audio = Variable(x.type(Tensor).transpose(1,0)) #50,1,1600
         
-        fake = generate_dance(audio)
+        if i == 0:
+            initp = torch.zeros(18,2)
+        else:
+            initp = torch.from_numpy(prevp)
+        initp = Variable(initp.type(Tensor))
+
+
+        fake = generate_dance(audio, initp)
 
         #wav.write("tmp.wav", 16000, scaled)
         fake_coors = fake.reshape([-1,18,2])
+        prevp = np.copy(fake_coors[-1])
         
         fake_coors[:,:,0] = (fake_coors[:,:,0]+1) * 320
         fake_coors[:,:,1] = (fake_coors[:,:,1]+1 ) * 180
@@ -137,4 +151,7 @@ def test(audiofile="C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/a
     os.remove("tmp.wav")
             
 if __name__ == '__main__':
-    test(input_file)
+    input_files = args.input.split(',')
+    for input_file in input_files:
+        filepath = join(cur_d, f"C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/audio/{input_file}_Trim.wav")
+        test(filepath)

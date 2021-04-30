@@ -62,7 +62,7 @@ for epoch in range(1, epochs+1):
     stgcn.train()
     for (x,target)in dataloader:
         bsz, time, _, _ = target.size()
-        y = stgcn(target.view(bsz, time, 34).cuda())
+        y = stgcn(target.view(bsz, time, 36).cuda())
         print('ysize', y.size())
         print(y)
         bsz,time,feature = y.size()

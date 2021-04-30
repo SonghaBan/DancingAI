@@ -11,7 +11,7 @@ join = os.path.join
 cur_d = os.path.dirname(__file__)
 
 DATA_SCORE = load_jsonfile(join(cur_d, 'datascore.json'))
-pass_score = 3
+pass_score = 3.5
 
 class DanceDataset(torch.utils.data.Dataset):
     def __init__(self, opt, train=True):
@@ -34,12 +34,15 @@ class DanceDataset(torch.utils.data.Dataset):
         
         target=torch.FloatTensor(self.length,50,1600).zero_() #music
         label=torch.FloatTensor(self.length,50,18,2).zero_() #dance
+        initposes = torch.FloatTensor(self.length, 18, 2).zero_()
         index=0
         
         keys=sorted(pose_dict.keys())
         for key in keys:
             pose_sequences = np.array(pose_dict[key]['pose'])
             audio_sequences = np.array(pose_dict[key]['music'])
+
+            initp = None
 
             for i, temp_pose in enumerate(pose_sequences):
                 temp_pose[:,:,0]=(temp_pose[:,:,0]/320)-1
@@ -50,11 +53,17 @@ class DanceDataset(torch.utils.data.Dataset):
                 temp_audio = np.array(audio_sequences[i])
                 d = torch.from_numpy(temp_audio).type(torch.LongTensor)
                 target[index] = d.view(50, 1600)
+                if i > 0:
+                    initp = torch.from_numpy(temp_pose[0])
+                    initposes[index] = initp
+                else:
+                    initposes[index] = torch.zeros(18,2)
 
                 index += 1
         
         self.audio=target
         self.label=label
+        self.initposes = initposes
         
         self._length = 80000
         
@@ -66,8 +75,10 @@ class DanceDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         #print("idx:",idx)
         one_hot=self.audio[idx]
-        target=self.label[idx]          
-        return one_hot, target
+        target=self.label[idx]
+        initp = self.initposes[idx]
+        
+        return one_hot, target, initp
 
     def __len__(self):
         return self.length

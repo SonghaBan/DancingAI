@@ -6,3 +6,4 @@ log/*
 output/*
 output_tr/*
 dataset/__pycache__/lisa_dataset_test.cpython-37.pyc
+dong/*
