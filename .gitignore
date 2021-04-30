@@ -1,5 +1,4 @@
 
-*.pyc
 net/utils/__pycache__/graph.cpython-37.pyc
 dataset/*.json
 log/*
@@ -7,3 +6,5 @@ output/*
 output_tr/*
 dataset/__pycache__/lisa_dataset_test.cpython-37.pyc
 dong/*
+*.pyc
+net/__pycache__/st_gcn_perceptual.cpython-37.pyc
