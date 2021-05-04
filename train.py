@@ -271,7 +271,8 @@ def train(generator,frame_discriminator,seq_discriminator,musicf_generator,opt):
             total_loss2 += loss_pixel.item()
             total_loss3 += loss_D1.item()
             total_loss4 += loss_D2.item()
-            total_loss5 += loss_G2.item()
+            if 'music' in opt.encoder:
+                total_loss5 += loss_G2.item()
             #tensorboard log
             writer.add_scalar('iteration/gan_loss', loss_G.item(), batches_now)
             writer.add_scalar('iteration/frame_loss', loss_D1.item(), batches_now)
@@ -280,7 +281,8 @@ def train(generator,frame_discriminator,seq_discriminator,musicf_generator,opt):
             writer.add_scalar('iteration/seq_loss', loss_D2.item(), batches_now)
             writer.add_scalar('iteration/L1loss', loss_pixel.item(), batches_now)
             writer.add_scalar('iteration/VGGLoss', loss_GCN.item(), batches_now)
-            writer.add_scalar('iteration/mf_loss', loss_G2.item(), batches_now)
+            if 'music' in opt.encoder:
+                writer.add_scalar('iteration/mf_loss', loss_G2.item(), batches_now)
             writer.add_scalar('iteration/D_Feature_Loss', loss_Frame_D.item(), batches_now)
             print("Epoch {} {}, GLoss: {}, L1Loss: {}, D_Feature_Loss {}, VGG_Loss {}, D1Loss: {}, D2Loss: {}  ".format(epoch , batches_done , loss_G.item(),loss_pixel.item(),loss_Frame_D.item(),loss_GCN.item(),loss_D1.item(),loss_D2.item()))
             # print("Epoch {} {}, GLoss: {}, L1Loss: {}, D_Feature_Loss {}, D1Loss: {}, D2Loss: {}  ".format(epoch , batches_done , loss_G.item(),loss_pixel.item(),loss_Frame_D.item(),loss_D1.item(),loss_D2.item()))
@@ -297,7 +299,8 @@ def train(generator,frame_discriminator,seq_discriminator,musicf_generator,opt):
         writer.add_scalar('epoch/L1_loss', total_loss2, epoch)
         writer.add_scalar('epoch/frame_loss', total_loss3, epoch)
         writer.add_scalar('epoch/seq_loss', total_loss4, epoch)
-        writer.add_scalar('epoch/mf_loss', total_loss5, epoch)
+        if 'music' in opt.encoder:
+            writer.add_scalar('epoch/mf_loss', total_loss5, epoch)
     writer.close()  
     
 if __name__ == '__main__':

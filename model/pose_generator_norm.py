@@ -62,7 +62,7 @@ class hr_pose_generator(nn.Module):
         self.batch=batch
         self.encoder = encoder
         self.tmpsize = 128 if 'min' in encoder else 256
-        if 'initp' in self.encoder:
+        if 'initp2' in self.encoder:
             self.size = self.tmpsize+10+5
         else:
             self.size = self.tmpsize+10
@@ -78,27 +78,18 @@ class hr_pose_generator(nn.Module):
         self.rnn_noise_squashing = nn.Tanh()
         # state size. hidden_channel_num*8 x 360 x 640
 
-        if 'conv' in encoder:
-            #input -1,266,51
-            self.layer0 = conv_layer(266, 512, kernel_size=5) #47
-            self.layer1 = conv_layer(512, 1024, kernel_size=5, stride=3) #15
-            self.layer2 = conv_layer(1024, 512, kernel_size=5, stride=2) #-1, 28, 8
-            self.layer3 = conv_layer(128, 64) # 24 5
-            self.layer4 = conv_layer(64,36, kernel_size=3) #18 2
- 
-            self.dropout =  nn.Dropout(p=0.5)
-            # self.final_linear = nn.Linear(256, 36)
-        else:
-            if 'initp' in self.encoder:
-                self.layeri = nn.Linear(36, 250)
-            self.layer0 = nn.Linear(self.size,linear_hidden)
-            #self.relu = nn.ReLU()
-            #self.bn=nn.BatchNorm1d(50)
-            self.layer1 = res_linear_layer(linear_hidden = linear_hidden)
-            self.layer2 = res_linear_layer(linear_hidden = linear_hidden)
-            self.layer3 = res_linear_layer(linear_hidden = linear_hidden)
-            self.dropout =  nn.Dropout(p=0.5)
-            self.final_linear = nn.Linear(linear_hidden,36)
+        if 'initp2' in self.encoder:
+            self.layeri = nn.Linear(36, 250)
+        elif 'initp' in self.encoder:
+            self.layeri = nn.Linear(36, self.size)
+        self.layer0 = nn.Linear(self.size,linear_hidden)
+        #self.relu = nn.ReLU()
+        #self.bn=nn.BatchNorm1d(50)
+        self.layer1 = res_linear_layer(linear_hidden = linear_hidden)
+        self.layer2 = res_linear_layer(linear_hidden = linear_hidden)
+        self.layer3 = res_linear_layer(linear_hidden = linear_hidden)
+        self.dropout =  nn.Dropout(p=0.5)
+        self.final_linear = nn.Linear(linear_hidden,36)
         
     def forward(self,input, initpose):
         #initpose : 18,2
@@ -109,39 +100,34 @@ class hr_pose_generator(nn.Module):
         # print('initp',initpose.size())        
 
         input = torch.cat([input, aux], 2)
-        if 'initp' in self.encoder:
+        if 'initp2' in self.encoder:
             initp = self.layeri(initpose.view(-1,36)) #-1, 250
             initp = initp.view(-1,50,5)
             # print(input.size(), initp.size())
             input = torch.cat([input, initp], 2) #-1,50,231
+        elif 'initp' in self.encoder:
+            initp = self.layeri(initpose.view(-1,36))
+            initp = initp.view(-1, 1, self.size)
+            input = torch.cat([input, initp], 1) #-1,51, 266
         #print(input.shape)
         #input=input.squeeze().view(1,50,266)
         #input=input.squeeze().view(50,266)
-        if 'conv' in self.encoder:
-            input = input.view(-1,50,231) #50 266
-            input = torch.transpose(input, 1, 2) #-1, 266, 51
             
-            output = self.layer0(input)
-            # output = output.view(-1, 16, 16, 2)
-            output = self.layer1(output) + output
-            output = self.dropout(output)
-            output = self.layer2(output) + output
-            output = self.layer3(output) + output
-            output = self.dropout(output)
-            output = self.layer4(output) #50,18,2
-            output = output.view(self.batch,50,36)
-        else:
-            
-            input = input.view(-1,self.size) #50 266
-            output = self.layer0(input)
-                #output = self.relu(output)
-            #output = self.bn(output)
-            output = self.layer1(output) + output
-            output = self.layer2(output) + output
-            output = self.layer3(output) + output
-            output = self.dropout(output)
+        input = input.view(-1,self.size) #50 266
+        output = self.layer0(input)
+            #output = self.relu(output)
+        #output = self.bn(output)
+        output = self.layer1(output) + output
+        output = self.layer2(output) + output
+        output = self.layer3(output) + output
+        output = self.dropout(output)
 
-            output = self.final_linear(output)#,36
+        output = self.final_linear(output)#,36
+        
+        if 'initp2' not in self.encoder and 'initp' in self.encoder:
+            output = output.view(self.batch,51,36)
+            output = output[:,:-1,:]
+        else:
             output = output.view(self.batch,50,36)
             # output = output[:,1:,:]
             # print('output',output.size())
