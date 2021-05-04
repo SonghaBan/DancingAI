@@ -61,12 +61,11 @@ class hr_pose_generator(nn.Module):
         super(hr_pose_generator,self).__init__()
         self.batch=batch
         self.encoder = encoder
-        if 'initp' in self.encoder and 'min' in self.encoder:
-            self.size = 128+10+5
-        elif 'initp' in self.encoder:
-            self.size = 256+10+5
+        self.tmpsize = 128 if 'min' in encoder else 256
+        if 'initp' in self.encoder:
+            self.size = self.tmpsize+10+5
         else:
-            self.size = 256+10
+            self.size = self.tmpsize+10
         #self.relu = nn.ReLU()
         #self.decoder = nn.GRU(bidirectional=True,hidden_size=36, input_size=266,num_layers= 3, batch_first=True)
         #self.fc=nn.Linear(72,36)
@@ -162,4 +161,7 @@ class Generator(nn.Module):
         output=self.audio_encoder(input)#input 50,1,1600 // output 1,50,256
         output=self.pose_generator(output,initp)#1，50，36
         return output#1,50,36
+
+    def extract_music_features(self, audio):
+        return self.audio_encoder(audio)
         

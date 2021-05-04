@@ -21,6 +21,7 @@ import glob
 from model.HCN_D import seq_discriminator
 from model.local_HCN_frame_D import HCN
 from model.pose_generator_norm import Generator#input 50,1,1600
+from model.pose_decoder import pose_decoder
 
 #load dataset
 from dataset.data_handler import DanceDataset
@@ -33,7 +34,6 @@ Tensor = torch.cuda.FloatTensor
 
 from net.st_gcn_perceptual import Model
 
-useGCN = False
 
 join = os.path.join
 cur_d = os.path.dirname(__file__)
@@ -51,7 +51,7 @@ class GCNLoss(nn.Module):
 
     def forward(self, x, y):
         loss = 0
-        if useGCN:        
+        if opt.gcn:        
             x_gcn, y_gcn = self.gcn.extract_feature(x), self.gcn.extract_feature(y)
             for i in range(len(x_gcn)):
                 loss_state = self.weights[i] * self.criterion(x_gcn[i], y_gcn[i].detach())
@@ -83,6 +83,8 @@ def save_models(epoch, opt):
     torch.save(generator.state_dict(), opt.out+"generator_{}.pth".format(epoch))
     torch.save(frame_discriminator.state_dict(), opt.out+"frame_{}.pth".format(epoch))
     torch.save(seq_discriminator.state_dict(), opt.out+"sequence_{}.pth".format(epoch))
+    if 'music' in opt.encoder:
+        torch.save(musicf_generator.state_dict(), opt.out+"musicf_{}.pth".format(epoch))
     print("Chekcpoint saved")
     
 def compute_gradient_penalty_sequence(D, real_samples, fake_samples,audio):
@@ -131,10 +133,9 @@ def compute_gradient_penalty_frame(D, real_samples, fake_samples):
     gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
     return gradient_penalty
     
-def train(generator,frame_discriminator,seq_discriminator,opt):
-    print('in')
+def train(generator,frame_discriminator,seq_discriminator,musicf_generator,opt):
     batch_size = opt.batch_size
-    writer = SummaryWriter(log_dir = opt.out_tensorboard)
+    writer = SummaryWriter(log_dir = opt.out)
     adversarial_loss = torch.nn.BCELoss()
     criterion_pixelwise = torch.nn.L1Loss()
     VGGLoss = GCNLoss(opt)
@@ -154,6 +155,7 @@ def train(generator,frame_discriminator,seq_discriminator,opt):
         total_loss2 = 0.0
         total_loss3 = 0.0
         total_loss4 = 0.0
+        total_loss5 = 0.0
         for i, (x,target,initp) in enumerate(dataloader):
             audio = Variable(x.type(Tensor).transpose(1,0))#50,1,1600
             pose = Variable(target.type(Tensor))#1,50,18,2
@@ -181,13 +183,44 @@ def train(generator,frame_discriminator,seq_discriminator,opt):
             loss_seq= adversarial_loss(seq_fake,seq_valid)
             loss_pixel = criterion_pixelwise(fake, pose)
             loss_GCN = VGGLoss(fake,pose)
+            if 'music' in opt.encoder:
+                fake_mf = musicf_generator(fake)
+                real_mf = generator.extract_music_features(audio)
+                loss_mf = criterion_pixelwise(fake_mf.detach(), real_mf.detach())
+
             # loss_GCN = 0
             loss_Frame_D = D_Feature(seq_discriminator, fake, pose)
+            
             # Total loss
-            # loss_G = loss_frame + loss_seq + loss_Frame_D + opt.alpha*loss_pixel
-            loss_G = loss_frame + loss_seq + loss_Frame_D + opt.alpha*loss_pixel + opt.lambda_grad*loss_GCN 
+            loss_G = loss_frame + loss_seq + loss_Frame_D + opt.alpha*loss_pixel
+            if opt.gcn:
+               loss_G += opt.lambda_grad*loss_GCN
+            if 'music' in opt.encoder:
+                loss_G += loss_mf
             loss_G.backward()
             optimizer_G.step()
+
+        # ---------------------
+        #  Train MusicFeature Generator
+        # ---------------------
+            if 'music' in opt.encoder:
+                musicf_generator.train()
+                optimizer_G2.zero_grad()
+
+                real_mf = generator.extract_music_features(audio)
+                g_real_mf = musicf_generator(pose)
+                loss_mf1 = criterion_pixelwise(g_real_mf.detach(), real_mf.detach())
+
+                real_mf = generator.extract_music_features(audio)
+                fake_mf = musicf_generator(fake)
+                loss_mf2 = criterion_pixelwise(fake_mf.detach(), real_mf.detach())
+
+                G2_loss = 0.5 * (loss_mf1 + loss_mf2)
+                loss_G2 = G2_loss
+                loss_G2.requires_grad=True
+
+                loss_G2.backward()
+                optimizer_G2.step()
 
         # ---------------------
         #  Train Discriminator frame
@@ -238,6 +271,7 @@ def train(generator,frame_discriminator,seq_discriminator,opt):
             total_loss2 += loss_pixel.item()
             total_loss3 += loss_D1.item()
             total_loss4 += loss_D2.item()
+            total_loss5 += loss_G2.item()
             #tensorboard log
             writer.add_scalar('iteration/gan_loss', loss_G.item(), batches_now)
             writer.add_scalar('iteration/frame_loss', loss_D1.item(), batches_now)
@@ -246,6 +280,7 @@ def train(generator,frame_discriminator,seq_discriminator,opt):
             writer.add_scalar('iteration/seq_loss', loss_D2.item(), batches_now)
             writer.add_scalar('iteration/L1loss', loss_pixel.item(), batches_now)
             writer.add_scalar('iteration/VGGLoss', loss_GCN.item(), batches_now)
+            writer.add_scalar('iteration/mf_loss', loss_G2.item(), batches_now)
             writer.add_scalar('iteration/D_Feature_Loss', loss_Frame_D.item(), batches_now)
             print("Epoch {} {}, GLoss: {}, L1Loss: {}, D_Feature_Loss {}, VGG_Loss {}, D1Loss: {}, D2Loss: {}  ".format(epoch , batches_done , loss_G.item(),loss_pixel.item(),loss_Frame_D.item(),loss_GCN.item(),loss_D1.item(),loss_D2.item()))
             # print("Epoch {} {}, GLoss: {}, L1Loss: {}, D_Feature_Loss {}, D1Loss: {}, D2Loss: {}  ".format(epoch , batches_done , loss_G.item(),loss_pixel.item(),loss_Frame_D.item(),loss_D1.item(),loss_D2.item()))
@@ -257,10 +292,12 @@ def train(generator,frame_discriminator,seq_discriminator,opt):
         total_loss2 /= batches_done
         total_loss3 /= batches_done
         total_loss4 /= batches_done
+        total_loss5 /= batches_done
         writer.add_scalar('epoch/gan_loss', total_loss1, epoch)
         writer.add_scalar('epoch/L1_loss', total_loss2, epoch)
         writer.add_scalar('epoch/frame_loss', total_loss3, epoch)
         writer.add_scalar('epoch/seq_loss', total_loss4, epoch)
+        writer.add_scalar('epoch/mf_loss', total_loss5, epoch)
     writer.close()  
     
 if __name__ == '__main__':
@@ -299,10 +336,16 @@ if __name__ == '__main__':
     optimizer_G = torch.optim.Adam(generator.parameters(), lr= opt.lr_g)
     optimizer_D1 = torch.optim.Adam(frame_discriminator.parameters(), lr= opt.lr_d_frame)
     optimizer_D2 = torch.optim.Adam(seq_discriminator.parameters(), lr=opt.lr_d_seq)
+    if 'music' in opt.encoder:
+        musicf_generator = pose_decoder(opt.batch_size, encoder=opt.encoder)
+        optimizer_G2 = torch.optim.Adam(musicf_generator.parameters(), lr=opt.lr_g)
+        musicf_generator.cuda()
+    else:
+        musicf_generator = None
 
     generator.cuda()
     frame_discriminator.cuda()
     seq_discriminator.cuda()
     print("data ok")
     
-    train(generator,frame_discriminator,seq_discriminator,opt)
+    train(generator,frame_discriminator,seq_discriminator,musicf_generator,opt)

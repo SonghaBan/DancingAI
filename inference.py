@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument(
         "--input",
-        default="2,4,7,56,68,116,125,117,13,41",
+        default="2,4,7,56,68,116,125,117,13,41,5,19,22,23,28,47,48,53",
         metavar="FILE",
         help="path to pth file",
         type=str

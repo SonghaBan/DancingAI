@@ -8,7 +8,6 @@ def get_arguments():
     #load, input, save configurations:
     parser.add_argument('--out',help='output folder for checkpoint',default='./log/lstm_gcn/')
     parser.add_argument('--gap_save',help='gap between save model',default=50)
-    parser.add_argument('--out_tensorboard',help='the output folder for tensorboard',default='./log/lstm_gcn/')
     parser.add_argument('--data',help='the path to dataset',default="./dataset/dance_music_paired.json")
     parser.add_argument('--pretrain_GCN',help='the pretrain GCN',default='./pretrain_model/GCN.pth')
 
@@ -24,5 +23,6 @@ def get_arguments():
 
     parser.add_argument('--encoder', type=str, help='gru, lstm, or tcn', default='gru')
     parser.add_argument('--resume', action='store_true', help='load weights and continue training')
+    parser.add_argument('--gcn', action='store_true', help='use perceptual loss')
     return parser
  
