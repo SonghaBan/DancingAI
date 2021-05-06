@@ -181,8 +181,12 @@ def train(generator,frame_discriminator,seq_discriminator,musicf_generator,opt):
             seq_fake=seq_discriminator(fake,audio)#1
             loss_frame = adversarial_loss(frame_fake, frame_valid)
             loss_seq= adversarial_loss(seq_fake,seq_valid)
-            loss_pixel = criterion_pixelwise(fake, pose)
-            loss_GCN = VGGLoss(fake,pose)
+            if 'only' in opt.encoder:
+                loss_pixel = 0
+                loss_GCN = 0
+            else:
+                loss_pixel = criterion_pixelwise(fake, pose)
+                loss_GCN = VGGLoss(fake,pose)
             if 'music' in opt.encoder:
                 fake_mf = musicf_generator(fake)
                 real_mf = generator.extract_music_features(audio)
@@ -268,7 +272,8 @@ def train(generator,frame_discriminator,seq_discriminator,musicf_generator,opt):
             index+=1
             batches_now = epoch * len(dataloader) + i
             total_loss1 += loss_G.item()
-            total_loss2 += loss_pixel.item()
+            if 'only' not in opt.encoder:
+                total_loss2 += loss_pixel.item()
             total_loss3 += loss_D1.item()
             total_loss4 += loss_D2.item()
             if 'music' in opt.encoder:
@@ -279,12 +284,13 @@ def train(generator,frame_discriminator,seq_discriminator,musicf_generator,opt):
             writer.add_scalar('iteration/real', loss_real_frame.item(), batches_now)
             writer.add_scalar('iteration/fake', loss_fake_seq.item(), batches_now)
             writer.add_scalar('iteration/seq_loss', loss_D2.item(), batches_now)
-            writer.add_scalar('iteration/L1loss', loss_pixel.item(), batches_now)
-            writer.add_scalar('iteration/VGGLoss', loss_GCN.item(), batches_now)
+            if 'only' not in opt.encoder:
+                writer.add_scalar('iteration/L1loss', loss_pixel.item(), batches_now)
+                writer.add_scalar('iteration/VGGLoss', loss_GCN.item(), batches_now)
             if 'music' in opt.encoder:
                 writer.add_scalar('iteration/mf_loss', loss_G2.item(), batches_now)
             writer.add_scalar('iteration/D_Feature_Loss', loss_Frame_D.item(), batches_now)
-            print("Epoch {} {}, GLoss: {}, L1Loss: {}, D_Feature_Loss {}, VGG_Loss {}, D1Loss: {}, D2Loss: {}  ".format(epoch , batches_done , loss_G.item(),loss_pixel.item(),loss_Frame_D.item(),loss_GCN.item(),loss_D1.item(),loss_D2.item()))
+            print("Epoch {} {}, GLoss: {}, D_Feature_Loss {}, D1Loss: {}, D2Loss: {}  ".format(epoch , batches_done , loss_G.item(),loss_Frame_D.item(),loss_D1.item(),loss_D2.item()))
             # print("Epoch {} {}, GLoss: {}, L1Loss: {}, D_Feature_Loss {}, D1Loss: {}, D2Loss: {}  ".format(epoch , batches_done , loss_G.item(),loss_pixel.item(),loss_Frame_D.item(),loss_D1.item(),loss_D2.item()))
                 
         if (epoch+1)%opt.gap_save==0:
@@ -335,6 +341,10 @@ if __name__ == '__main__':
         frame_discriminator.load_state_dict(torch.load(sorted(files)[-1]))
         files = glob.glob(join(opt.out, 'sequence_*.pth'))
         seq_discriminator.load_state_dict(torch.load(sorted(files)[-1]))
+
+        if 'music' in opt.encoder:
+            files = glob.glob(join(opt.out, 'musicf_*.pth'))
+            musicf_generator.load_state_dict(torch.load(sorted(files)[-1]))
 
     optimizer_G = torch.optim.Adam(generator.parameters(), lr= opt.lr_g)
     optimizer_D1 = torch.optim.Adam(frame_discriminator.parameters(), lr= opt.lr_d_frame)
