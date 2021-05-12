@@ -210,7 +210,7 @@ def train(generator,frame_discriminator,seq_discriminator,musicf_generator,opt):
             if 'music' in opt.encoder:
                 musicf_generator.train()
                 optimizer_G2.zero_grad()
-
+                
                 real_mf = generator.extract_music_features(audio)
                 g_real_mf = musicf_generator(pose)
                 loss_mf1 = criterion_pixelwise(g_real_mf.detach(), real_mf.detach())
@@ -218,7 +218,7 @@ def train(generator,frame_discriminator,seq_discriminator,musicf_generator,opt):
                 real_mf = generator.extract_music_features(audio)
                 fake_mf = musicf_generator(fake)
                 loss_mf2 = criterion_pixelwise(fake_mf.detach(), real_mf.detach())
-
+                
                 G2_loss = 0.5 * (loss_mf1 + loss_mf2)
                 loss_G2 = G2_loss
                 loss_G2.requires_grad=True
@@ -342,10 +342,6 @@ if __name__ == '__main__':
         files = glob.glob(join(opt.out, 'sequence_*.pth'))
         seq_discriminator.load_state_dict(torch.load(sorted(files)[-1]))
 
-        if 'music' in opt.encoder:
-            files = glob.glob(join(opt.out, 'musicf_*.pth'))
-            musicf_generator.load_state_dict(torch.load(sorted(files)[-1]))
-
     optimizer_G = torch.optim.Adam(generator.parameters(), lr= opt.lr_g)
     optimizer_D1 = torch.optim.Adam(frame_discriminator.parameters(), lr= opt.lr_d_frame)
     optimizer_D2 = torch.optim.Adam(seq_discriminator.parameters(), lr=opt.lr_d_seq)
@@ -353,6 +349,9 @@ if __name__ == '__main__':
         musicf_generator = pose_decoder(opt.batch_size, encoder=opt.encoder)
         optimizer_G2 = torch.optim.Adam(musicf_generator.parameters(), lr=opt.lr_g)
         musicf_generator.cuda()
+        if opt.resume:
+            files = glob.glob(join(opt.out, 'musicf_*.pth'))
+            musicf_generator.load_state_dict(torch.load(sorted(files)[-1]))
     else:
         musicf_generator = None
 

@@ -17,6 +17,7 @@ import time
 import datetime
 import json
 from utils import make_pose_video, attach_audio, get_filelabel
+import glob 
 
 join = os.path.join
 cur_d = os.path.dirname(__file__)
@@ -53,7 +54,7 @@ parser.add_argument(
         type=str
     )
 
-parser.add_argument("--count", type=int, default=10)#100
+parser.add_argument("--count", type=int, default=15)#100
 parser.add_argument(
         "--output",
         default=join(cur_d,"../output"),
@@ -66,6 +67,8 @@ parser.add_argument(
         default=join(cur_d,"gru"),
         type=str
     )
+
+parser.add_argument('--eval', action='store_true', help='evaluate')
 args = parser.parse_args()
 
 file_path=args.model
@@ -110,6 +113,7 @@ def test(audiofile="C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/a
                                              pin_memory=False)
 
     result = []
+    result_save = {'music':[],'pose':[]}
     outaudio = []
     prevp = None
     for i, x in enumerate(dataloader):
@@ -137,11 +141,15 @@ def test(audiofile="C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/a
         fake_coors[:,:,1] = (fake_coors[:,:,1]+1 ) * 180
         fake_coors = fake_coors.astype(int).tolist()
 
-        save_output(fake_coors, join(output_dir, f"{i}.json"))
+        # save_output(fake_coors, join(output_dir, f"{i}.json"))
 
         result.extend(fake_coors)
-        
+        result_save['music'].append(audio_out.tolist())
+        result_save['pose'].append(fake_coors)
+    
+    save_output(result_save, join(output_dir, f"result_{get_filelabel(audiofile)}.json"))
 
+    
     outaudio = np.int16(outaudio)
     wav.write("tmp.wav", 16000, outaudio)
 
@@ -149,9 +157,15 @@ def test(audiofile="C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/a
     make_pose_video(result, output_filename=outfile)
     attach_audio(outfile, "tmp.wav")
     os.remove("tmp.wav")
+    
             
 if __name__ == '__main__':
-    input_files = args.input.split(',')
-    for input_file in input_files:
-        filepath = join(cur_d, f"C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/audio/{input_file}_Trim.wav")
-        test(filepath)
+    if args.input == 'test':
+        input_files = glob.glob('../../data/audio/test/*.wav')
+        for input_file in input_files:
+            test(input_file)
+    else:
+        input_files = args.input.split(',')
+        for input_file in input_files:
+            filepath = join(cur_d, f"C:/Users/songhama/Documents/_School/Spring2021/Thesis/data/audio/{input_file}_Trim.wav")
+            test(filepath)
