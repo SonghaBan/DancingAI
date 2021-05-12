@@ -292,7 +292,7 @@ def split_all_files():
 def normalize_pose(filename):
     flabel = get_filelabel(filename)
     data = load_jsonfile(filename)
-    # width, height = get_video_size(f"data/final_videos/{flabel}.mp4")
+    width, height = get_video_size(f"data/final_videos/{flabel}.mp4")
     dancer_sizes = []
     prev = None
     diff = None
@@ -339,13 +339,15 @@ def normalize_pose(filename):
         
     newdata = np.array(newdata)
     v_add = 350 - max(newdata[:,10,1].max(), newdata[:,13,1].max()) #rankle lankle
-    lankles = newdata[:,13,0]
+    newdata[:,:,1] += v_add
+    
+    lankles = newdata[:,13,0].copy()
     lankles.sort()
     if lankles[-20] < 350:
         newdata[:,:,0] += 320
     else:
-        newdata[:,:,0] += 320 - (lankles[-20] - 340)
-    newdata[:,:,1] += v_add
+        newdata[:,:,0] += 320 - min(lankles[-20] - 340, 300)
+    
     newdata = newdata.tolist()
     
     return newdata
@@ -452,17 +454,18 @@ def normalize_all_audio():
     files = glob.glob('data/audio/*.wav')
     for filename in files:
         normalize_audio(filename)
-          
+
+
 def main():
     extract_all_audio()
     clean_all_files()
     normalize_all_audio()
     normalize_all_files()
     split_all_files()
-
+'''
 if __name__ == '__main__':
     main()
-
+'''
 '''
 def get_mfcc(filename):
 #    y1, sr1 = librosa.load(filename) 

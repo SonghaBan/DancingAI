@@ -137,7 +137,7 @@ def make_video_openpose(data, save_video=True, output_filename="../test.mp4",fps
         for limb in l_pair:
             x1, y1 = pose[limb[0]]
             x2, y2 = pose[limb[1]]
-            line = gz.polyline(points=[(x1,y1), (x2,y2)], stroke_width = 5, stroke=line_color[line_cnt])
+            line = gz.polyline(points=[(x1,y1), (x2,y2)], stroke_width = 6, stroke=line_color[line_cnt])
 #            print('line', line_cnt)
             line_cnt += 1
             line.draw(surface)
@@ -145,7 +145,7 @@ def make_video_openpose(data, save_video=True, output_filename="../test.mp4",fps
         for idx in range(len(pose)):
 #            print(idx)
             x1, y1 = pose[idx]
-            joint = gz.circle(3, xy=[x1,y1], fill=(0,0,0))
+            joint = gz.circle(4, xy=[x1,y1], fill=(0,0,0))
             joint.draw(surface)
 
         result.append(surface.get_npimage())
