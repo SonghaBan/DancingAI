@@ -5,10 +5,10 @@ The dance generation framework adapted the [Pytorch implementation](https://gith
 The demo video is shown at: ~~ (TODO)
 
 ### Building Dataset:
-Pose estimation: extract_pose.py
-Pose evaluation: pose_eval.py
-Skeleton visualization: visframe.py
-Pose cleaning, normalization: preprocessing.py
+- Pose estimation: extract_pose.py
+- Pose evaluation: pose_eval.py
+- Skeleton visualization: visframe.py
+- Pose cleaning, normalization: preprocessing.py
 
 ### Training:
 Run
