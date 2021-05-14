@@ -16,6 +16,7 @@ import time
 import numpy as np
 from pydub import AudioSegment, effects  
 import multiprocessing as mp
+
 def normalize_audio(filename):
     rawsound = AudioSegment.from_file(filename)  
     normalizedsound = effects.normalize(rawsound)

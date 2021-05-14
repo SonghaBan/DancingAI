@@ -118,33 +118,6 @@ class RNN(nn.Module):
         return output.contiguous()
         
         
-        
-class AudioDecoder(nn.Module):
-    def __init__(self, batch, encoder='gru'):
-        self.encoder = Encoder()
-        if 'lstm' in encoder:
-            self.rnn = nn.LSTM(bidirectional=True,hidden_size=256, input_size=256,num_layers=2, batch_first=True)
-        elif 'mix' in encoder:
-            self.rnn = nn.LSTM(bidirectional=True,hidden_size=256, input_size=256,num_layers=2, batch_first=True)
-        else:
-            self.rnn = nn.GRU(bidirectional=True,hidden_size=256, input_size=256,num_layers= 2, batch_first=True)
-            
-        if 'min' in encoder:
-            self.fc = nn.Linear(512, 128)
-        else:
-            self.fc = nn.Linear(512, 256)
-        self.batch=batch
-
-    def forward(self, x):
-        #x: pose : -1, 50, 36
-        tran_x=x.contiguous().view(self.batch,1,36*50)
-        output=self.encoder(tran_x)
-        output=output.view(50,self.batch,-1).transpose(0,1)
-        output, _ = self.rnn(output)
-        output = output.contiguous().view(self.batch,output.shape[1],-1)
-        output = self.fc(output) #[1, 50, 256]
-        return output.contiguous()
-        
     
     
     
