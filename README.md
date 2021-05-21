@@ -27,7 +27,8 @@ python train.py --encoder musicinitpmin --out log/gru
 ```
 
 ### Testing:
-Give saved model file path and encoder setting as arguments for testing
+Give saved model file path and encoder setting as arguments for testing.
+
 Ex) Testing the modified GRU model
 ```
 python inference.py --model log/gru/generator_0350.pth --output output/gru/ --encoder musicinitpmin
