@@ -16,7 +16,6 @@ import time
 import numpy as np
 from pydub import AudioSegment, effects  
 import multiprocessing as mp
-
 def normalize_audio(filename):
     rawsound = AudioSegment.from_file(filename)  
     normalizedsound = effects.normalize(rawsound)
@@ -447,7 +446,7 @@ def normalize_all_files(process=8):
 def clean_all_files():
     files = glob.glob('PoseEstimation/output_fast/*.json')
     for filename in files:
-    #    make_skeleton_video(filename, org=True)
+        make_skeleton_video(filename, org=True)
         dc = DataCleaner(filename, fps=10)
         dc.run()
         
