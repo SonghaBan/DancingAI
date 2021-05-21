@@ -462,17 +462,6 @@ def main():
     normalize_all_audio()
     normalize_all_files()
     split_all_files()
-'''
+    
 if __name__ == '__main__':
     main()
-'''
-'''
-def get_mfcc(filename):
-#    y1, sr1 = librosa.load(filename) 
-    y, sr = librosa.load(filename, offset=15.0, duration=5.0)
-    mfcc1 = librosa.feature.mfcc(y,sr, n_mfcc=10)   #Computing MFCC values
-    return mfcc1
-
-mfcc2 = get_mfcc("data/audio/29_Trim.wav")
-#data = librosa.feature.mfcc(y=y, sr=sr, n_fft=1012, hop_length=256, n_mfcc=20)
-'''

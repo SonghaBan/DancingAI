@@ -130,4 +130,3 @@ showall(max)
 '''
 a,b,c,d,e = analyze_models(alpha_files)
 
-116540+115737+115681

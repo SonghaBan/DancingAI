@@ -117,6 +117,7 @@ def max_dim(doc, dim):
         for val in numarr[dim::3]
     ))
     
+#to visualize the final ready dataset and the generated dance
 def make_video_openpose(data, save_video=True, output_filename="../test.mp4",fps=10):
     width = 640
     height = 360
