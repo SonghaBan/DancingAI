@@ -1,8 +1,15 @@
 ## Dancing AI
 
+This is my thesis project for Bachelor's Cognitive Science and Artificial Intelligence at Tilburg University.
+
+The paper is available [here](https://songhaban.com/document/Bachelor_CSAI_thesis_SonghaBan_2023907.pdf).
+
+The demo video is available [here](https://youtu.be/UE9QnT59LlI).
+
+
 The dance generation framework was adapted from the [Pytorch implementation](https://github.com/xrenaa/Music-Dance-Video-Synthesis) of this [Paper](https://arxiv.org/abs/1912.06606)
 
-The demo video is available at: https://youtu.be/UE9QnT59LlI
+
 
 ### Building Dataset:
 - Pose estimation: `extract_pose.py`
