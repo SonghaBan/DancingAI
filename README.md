@@ -1,6 +1,6 @@
 ## Dancing AI
 
-This is my thesis project for Bachelor's Cognitive Science and Artificial Intelligence at Tilburg University.
+This is my thesis project for Bachelor's Cognitive Science and Artificial Intelligence at Tilburg University, which was published in BNAIC/BeneLearn 2021 (AI & ML conference for Belgium, Netherlands & Luxemburg) and awarded the best thesis prize.
 
 The paper is available [here](https://songhaban.com/document/Bachelor_CSAI_thesis_SonghaBan_2023907.pdf).
 
